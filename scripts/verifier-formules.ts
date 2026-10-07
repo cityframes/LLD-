@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { DEFAULTS, SimulatorParams } from '../src/lib/types';
 import { computeEngine, computePnL } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
+import { marginForRentTTC, marginForRoe, scenarioTable, optionsGrid, adjustedVrPct } from '../src/lib/pricing';
 
 let ok = 0;
 function check(name: string, fn: () => void) {
@@ -82,6 +83,43 @@ check('Entretien non nul sous 10 000 km au total', () => {
 check('Provision aléas calculée sur le coût atelier, hors marge banque', () => {
   const { r } = run({ smr_aleas: 10 });
   near(r.smrPlan.provisionAleasAmountHT, r.smrPlan.totalApresRemiseHT * 0.10, 0.01);
+});
+
+check('Valeurs par défaut = contrat type du budget 2027 (Doblo Panorama club)', () => {
+  const { r } = run();
+  near(r.amortM_avg, 43318.375, 0.01, 'remboursement du capital');
+  near(r.revM_avg, 26919, 300, 'marge de location');
+  near(r.vehMens, 8000, 0.01, 'véhicule de remplacement');
+});
+
+check('Calcul inverse : la marge trouvée redonne le loyer TTC demandé', () => {
+  const m = marginForRentTTC(DEFAULTS, 120000);
+  assert.ok(m !== null);
+  near(computeEngine({ ...DEFAULTS, p_target_margin: m! }).loyerTTC, 120000, 15);
+});
+
+check('Calcul inverse : la marge trouvée atteint le ROE cible', () => {
+  const m = marginForRoe(DEFAULTS, 15);
+  assert.ok(m !== null);
+  const roe = computePnL(computeEngine({ ...DEFAULTS, p_target_margin: m! })).roeEff * 100;
+  assert.ok(roe >= 15 && roe < 15.05, `ROE ${roe}`);
+});
+
+check('Calcul inverse : cible hors d\'atteinte signalée', () => {
+  assert.equal(marginForRentTTC(DEFAULTS, 1000), null);
+});
+
+check('Scénarios côte à côte : du plus favorable au stress', () => {
+  const t = Object.fromEntries(scenarioTable(run().r).map(x => [x.key, x.pl.resultatNet]));
+  assert.ok(t.optimiste > t.base && t.base > t.prudent && t.prudent > t.stress);
+});
+
+check('Grille d\'options : la case courante redonne la simulation, et la VR baisse avec la durée', () => {
+  const g = optionsGrid(DEFAULTS);
+  const cur = g.find(row => row[0].kmAn === 30000)!.find(c => c.duree === 48)!;
+  near(cur.loyerHT, run().r.loyerHT, 0.01);
+  assert.ok(adjustedVrPct(DEFAULTS, 60, 30000) < adjustedVrPct(DEFAULTS, 36, 30000));
+  assert.ok(g.every(row => row[0].loyerHT > row[3].loyerHT), '24 mois plus cher que 60 mois');
 });
 
 console.log(`\n${ok} contrôle(s) réussi(s)`);

@@ -21,6 +21,9 @@ export interface SimulatorParams {
   p_depot: number;
   p_vr_pct: number;
   p_vr_frais: number;
+  // Grille d'options : baisse de VR (points de %) par 12 mois et par 10 000 km/an supplémentaires
+  p_vr_pente_mois: number;
+  p_vr_pente_km: number;
 
   // Capital & Yield
   p_cost_debt: number;
@@ -78,6 +81,8 @@ export interface SimulatorParams {
   v11_scenario: string;
 }
 
+// Valeurs par défaut = contrat type du budget LLD 2027
+// (Doblo Panorama club, 48 mois, 120 000 km, VR 45,7 %, sukuk 6 %, fonds propres 12 %, risque client 1,5 %)
 export const DEFAULTS: SimulatorParams = {
   clientName: "Entreprise XYZ",
   clientRef: "LLD-2026-4782",
@@ -86,32 +91,34 @@ export const DEFAULTS: SimulatorParams = {
 
   p_duree_min: 24,
   p_duree_max: 60,
-  p_target_margin: 3.0,
+  p_target_margin: 4.8,
   p_pass_lgd: false,
   p_pass_admin: false,
   p_target_rent: 0,
 
-  p_achat: 3804800,
-  p_liv: 25000,
+  p_achat: 3774000,
+  p_liv: 30000,
   p_duree: 48,
   p_km: 120000,
   p_apport: 0,
   p_depot: 380000,
-  p_vr_pct: 45,
-  p_vr_frais: 60000,
+  p_vr_pct: 45.7,
+  p_vr_frais: 0,
+  p_vr_pente_mois: 7,
+  p_vr_pente_km: 3,
 
-  p_cost_debt: 5.5,
-  p_equity_pct: 10,
+  p_cost_debt: 6.0,
+  p_equity_pct: 12,
   p_atroe: 15,
   p_ibs: 26,
   p_hurdle_externe: 15,
-  p_risk: 1.0,
+  p_risk: 1.5,
   p_risk_vr: 5,
   p_admin: 1500,
   p_lease_adj: 0,
   p_adj_type: "commercial",
 
-  smr_engine_type: "diesel",
+  smr_engine_type: "essence",
   smr_severe: false,
   smr_include_big: true,
   smr_remise: 5,
@@ -133,16 +140,16 @@ export const DEFAULTS: SimulatorParams = {
   c_pneu: 25000,
   km_pneu: 40000,
   c_mob: 3000,
-  c_assistance: 1500,
-  c_gestion: 2000,
+  c_assistance: 3000,
+  c_gestion: 0,
   c_veh_j: 12,
-  c_veh_d: 4500,
+  c_veh_d: 8000,
 
   p_tak_md: 0.75,
-  p_tak_rc: 5000,
-  p_vignette: 4000,
-  tak_catalog_mode: false,
-  veh_idx: -1,
+  p_tak_rc: 10000,
+  p_vignette: 8000,
+  tak_catalog_mode: true,
+  veh_idx: 2,
 
   p_km_coef: 1.20,
   p_km_franchise: 1000,

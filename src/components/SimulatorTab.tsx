@@ -6,6 +6,7 @@ import { ControlsV10 } from './Controls';
 import { Catalog } from './Catalog';
 import { PricingCenterV11 } from './PricingCenter';
 import { ClientInfo } from './ClientInfo';
+import { OptionsGrid } from './OptionsGrid';
 import { fmt, fDZA } from '../lib/utils';
 import { InputRow } from './ui/InputRow';
 
@@ -38,6 +39,7 @@ export function SimulatorTab() {
           <ControlsV10 />
           <Catalog />
           <PricingCenterV11 />
+          <OptionsGrid />
           <Params />
         </div>
         <div>

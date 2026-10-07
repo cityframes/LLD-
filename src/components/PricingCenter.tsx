@@ -3,6 +3,7 @@ import { useStateContext } from '../Store';
 import { V11_PROFILES, V11_SCENARIOS } from '../lib/types';
 import { fmt, fDZA } from '../lib/utils';
 import { computePnL } from '../lib/engine';
+import { scenarioTable } from '../lib/pricing';
 import { cn } from '../lib/utils';
 
 export function PricingCenterV11() {
@@ -106,6 +107,8 @@ export function PricingCenterV11() {
           <KpiBox label="TRI après IBS (scénario)" val={`${fmt(pnlResult.irrAnn * 100, 2)} %`} />
           <KpiBox label="Marge nette (scénario)" val={fDZA(pnlResult.mfn)} />
         </div>
+
+        <ScenarioTable onPick={k => dispatch({ type: 'SET_PARAM', payload: { key: 'v11_scenario', value: k } })} selected={params.v11_scenario} />
       </div>
     </div>
   );
@@ -116,6 +119,52 @@ function KpiBox({ label, val }: { label: string, val: string }) {
     <div className="p-2 bg-[var(--color-bg2)] border border-[var(--color-border-light)] rounded-md">
       <span className="block text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">{label}</span>
       <strong className="block mt-1 font-mono text-[13px] text-[var(--color-txt)] font-bold">{val}</strong>
+    </div>
+  );
+}
+
+const SC_LABELS: Record<string, string> = { base: 'Base', optimiste: 'Optimiste', prudent: 'Prudent', stress: 'Stress' };
+
+function ScenarioTable({ onPick, selected }: { onPick: (k: string) => void, selected: string }) {
+  const { engineResult } = useStateContext();
+  const rows = scenarioTable(engineResult);
+  const pct = (v: number) => `${fmt(v * 100, 1)} %`;
+  return (
+    <div className="mt-3 overflow-x-auto">
+      <div className="text-[10px] uppercase tracking-[1px] font-extrabold text-[var(--color-gold)] mb-1.5">Scénarios côte à côte · loyer du contrat inchangé</div>
+      <table className="w-full border-collapse text-[11px] min-w-[520px]">
+        <thead>
+          <tr className="text-[8.5px] uppercase tracking-[0.7px] text-[var(--color-txt3)]">
+            <th className="text-left p-1.5">Scénario</th>
+            <th className="text-right p-1.5">Choc VR</th>
+            <th className="text-right p-1.5">Choc ressource</th>
+            <th className="text-right p-1.5">Résultat net</th>
+            <th className="text-right p-1.5">ROE après IBS</th>
+            <th className="text-right p-1.5">TRI après IBS</th>
+            <th className="text-center p-1.5">Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ key, sc, pl, status }) => (
+            <tr key={key} onClick={() => onPick(key)} className={cn("border-t border-[var(--color-border-light)] cursor-pointer hover:bg-white/5", selected === key && "bg-[#c9a84c14]")}>
+              <td className="p-1.5 font-bold text-[var(--color-txt)]">{SC_LABELS[key] || key}</td>
+              <td className="p-1.5 text-right font-jetbrains text-[var(--color-txt2)]">{sc.vr === 0 ? '—' : `${sc.vr > 0 ? '+' : ''}${fmt(sc.vr * 100, 0)} pts`}</td>
+              <td className="p-1.5 text-right font-jetbrains text-[var(--color-txt2)]">{sc.cost === 0 ? '—' : `${sc.cost > 0 ? '+' : ''}${fmt(sc.cost * 100, 1)} %`}</td>
+              <td className="p-1.5 text-right font-jetbrains" style={{ color: pl.resultatNet < 0 ? 'var(--color-red)' : 'var(--color-green)' }}>{fDZA(pl.resultatNet)}</td>
+              <td className="p-1.5 text-right font-jetbrains text-[var(--color-txt)]">{pct(pl.roeEff)}</td>
+              <td className="p-1.5 text-right font-jetbrains text-[var(--color-txt)]">{pct(pl.irrAnn)}</td>
+              <td className="p-1.5 text-center">
+                <span className={cn("px-2 py-0.5 rounded text-[9.5px] font-bold",
+                  status === 'good' && "bg-[#27ae7a1e] text-[#39c98a]",
+                  status === 'warn' && "bg-[#d4882a1e] text-[#e0a04a]",
+                  status === 'bad' && "bg-[#dc46461e] text-[#ef7070]")}>
+                  {status === 'good' ? '✓ OK' : status === 'warn' ? '⚠ À valider' : '✗ Insuffisant'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
