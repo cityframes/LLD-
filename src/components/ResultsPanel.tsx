@@ -40,7 +40,7 @@ export function ResultsPanel() {
           <div className="text-center"><span className="font-jetbrains text-[12px] font-bold text-[var(--color-cyan)] block mb-px">{fDZA(engineResult.depot)}</span><span className="text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">HJ Collatéral</span></div>
           <div className="text-center"><span className="font-jetbrains text-[12px] font-bold text-[var(--color-gold-l)] block mb-px">{fDZA(engineResult.vrNette)}</span><span className="text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">VR Nette HT</span></div>
           <div className="text-center"><span className="font-jetbrains text-[12px] font-bold text-[var(--color-gold)] block mb-px">{fDZA(engineResult.vrNetteTTC)}</span><span className="text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">VR Cession TTC</span></div>
-          <div className="text-center"><span className="font-jetbrains text-[12px] font-bold text-[var(--color-gold-l)] block mb-px">{(engineResult.waccAnn * 100).toFixed(2)}%</span><span className="text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">WACC Annuel</span></div>
+          <div className="text-center"><span className="font-jetbrains text-[12px] font-bold text-[var(--color-gold-l)] block mb-px">{(engineResult.rateLocAnn * 100).toFixed(2)}%</span><span className="text-[8px] text-[var(--color-txt3)] uppercase tracking-[0.7px]">Taux locatif (WACC {(engineResult.waccAnn * 100).toFixed(2)}% + marge)</span></div>
         </div>
 
         <Block id="fi" name="Ijarah — Capital Financier" icon="🏦" color="#5fa0e0" bg="rgba(45,111,189,.07)" border="rgba(45,111,189,.12)" monthly={engineResult.blocFi} total={engineResult.blocFi * d} open={openBlocks.fi} onToggle={() => toggleBlock('fi')}>

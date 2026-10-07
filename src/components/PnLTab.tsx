@@ -6,7 +6,7 @@ import { cn } from '../lib/utils';
 export function PnLTab() {
   const { engineResult: r, pnlResult: pl } = useStateContext();
 
-  const hurdle = r.waccAnn;
+  const hurdle = r.hurdle;
   const triGood = pl.irrAnn >= hurdle;
   const triOk = pl.irrAnn >= hurdle * 0.9;
   const roeGood = pl.roeEff >= r.atroe;
@@ -16,12 +16,12 @@ export function PnLTab() {
   return (
     <div>
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4.5">
-        <KpiTop label="TRI Equity (IRR)" val={`${fmt(pl.irrAnn * 100, 2)} %`} sub="vs WACC contrat" color="var(--color-cyan)" />
-        <KpiTop label="ROE Effectif" val={`${fmt(pl.roeEff * 100, 2)} %`} sub={`vs cible ${fmt(r.atroe * 100, 1)}%`} main />
+        <KpiTop label="TRI Equity (IRR)" val={`${fmt(pl.irrAnn * 100, 2)} %`} sub={`après IBS · vs seuil ${fmt(hurdle * 100, 1)}%`} color="var(--color-cyan)" />
+        <KpiTop label="ROE Effectif" val={`${fmt(pl.roeEff * 100, 2)} %`} sub={`après IBS · vs cible ${fmt(r.atroe * 100, 1)}%`} main />
         <KpiTop label="VAN Equity (NPV)" val={fDZA(pl.vanEquity)} sub={`Au taux cible ${fmt(r.atroe * 100, 1)}%`} color={vanGood ? "var(--color-green)" : "var(--color-red)"} />
-        <KpiTop label="PNB Brut Contrat" val={fDZA(pl.pnbBrut)} sub="Ijarah + Markup SMR" color="var(--color-green)" />
+        <KpiTop label="PNB Brut Contrat" val={fDZA(pl.pnbBrut)} sub="Ijarah + SMR + ajustements" color="var(--color-green)" />
         <KpiTop label="Marge Fi. Nette" val={fDZA(pl.mfn)} sub="PNB - charges directes" color="var(--color-orange)" />
-        <KpiTop label="Spread Net" val={`${fmt(pl.spread * 100, 2)} %`} sub="WACC - Coût dette" color="var(--color-blue)" />
+        <KpiTop label="Spread Net" val={`${fmt(pl.spread * 100, 2)} %`} sub="Taux locatif - Coût dette" color="var(--color-blue)" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5 mb-4.5">
@@ -39,17 +39,20 @@ export function PnLTab() {
                 <tr className="bg-black/20 text-[var(--color-txt3)] text-[9px] uppercase tracking-[1px] font-bold"><td colSpan={2} className="px-3.5 py-1.5">PRODUITS (Revenus Bancaires)</td></tr>
                 <Tr label="Revenu Ijarah (marge de location)" val={pl.sumRevIj} valColor="var(--color-green)" />
                 <Tr label="Marge sur SMR Mécanique (markup)" val={pl.smrMkupTot} valColor="var(--color-green)" />
-                <Tr label="Lease Adjustment (si positif)" val={pl.laPosTotal} valColor="var(--color-green)" />
+                <Tr label="Ajustement de loyer (remise / majoration)" val={pl.laTotal} valColor={pl.laTotal < 0 ? "var(--color-red)" : "var(--color-green)"} />
+                <Tr label="LGD & frais de gestion refacturés au client" val={pl.passTotal} valColor="var(--color-green)" />
                 <tr className="bg-[rgba(201,168,76,.04)] border-t-2 border-[var(--color-border-main)] font-bold"><td className="px-3.5 py-1.5 text-[12px] text-[var(--color-txt)]">= PNB Brut</td><td className="px-3.5 py-1.5 text-[13px] text-right text-[var(--color-gold-l)] font-jetbrains">{fDZA(pl.pnbBrut)}</td></tr>
                 
                 <tr className="bg-black/20 text-[var(--color-txt3)] text-[9px] uppercase tracking-[1px] font-bold"><td colSpan={2} className="px-3.5 py-1.5 border-t border-[var(--color-border-light)]">CHARGES DIRECTES</td></tr>
                 <Tr label="Coût de Refinancement (dette)" val={pl.sumDebtCost} valColor="var(--color-red)" />
                 <Tr label="Provisions LGD (risque client)" val={pl.sumLGD} valColor="var(--color-red)" />
-                <Tr label="Provision Risque VR (réalisation cession)" val={pl.vrRiskProv} valColor="var(--color-red)" />
+                <Tr label="Provision Risque VR (réalisation cession)" val={pl.vrCharge} valColor="var(--color-red)" />
                 <Tr label="Frais de Gestion Bancaire" val={pl.sumAdmin} valColor="var(--color-red)" />
                 <tr className="bg-[rgba(201,168,76,.04)] border-t-2 border-[var(--color-border-main)] font-bold"><td className="px-3.5 py-1.5 text-[12px] text-[var(--color-txt)]">= Total Charges Directes</td><td className="px-3.5 py-1.5 text-[13px] text-right text-[var(--color-gold-l)] font-jetbrains">{fDZA(pl.chargesTotal)}</td></tr>
                 
                 <tr className={cn("bg-[#27ae7a0d] border-t-2 border-[#27ae7a33]", pl.mfn < 0 && "border-t-[#c0392b4d] bg-[#c0392b0d]")}><td className="px-3.5 py-1.5 font-bold text-[12px] text-[var(--color-green)]" style={pl.mfn < 0 ? { color: 'var(--color-red)' } : {}}>✦ MARGE FINANCIÈRE NETTE</td><td className="px-3.5 py-1.5 font-jetbrains font-bold text-[14px] text-right text-[var(--color-green)]" style={pl.mfn < 0 ? { color: 'var(--color-red)' } : {}}>{fDZA(pl.mfn)}</td></tr>
+                <Tr label={`IBS (${fmt(r.ibs * 100, 0)}%)`} val={-pl.ibsAmount} valColor="var(--color-red)" />
+                <tr className="bg-[rgba(201,168,76,.04)] border-t-2 border-[var(--color-border-main)] font-bold"><td className="px-3.5 py-1.5 text-[12px] text-[var(--color-txt)]">= Résultat net après IBS</td><td className="px-3.5 py-1.5 text-[13px] text-right font-jetbrains" style={{ color: pl.resultatNet < 0 ? 'var(--color-red)' : 'var(--color-green)' }}>{fDZA(pl.resultatNet)}</td></tr>
                 
                 <tr className="bg-black/20 text-[var(--color-txt3)] text-[9px] uppercase tracking-[1px] font-bold"><td colSpan={2} className="px-3.5 py-1.5 border-t border-[var(--color-border-light)]">MÉMO — FLUX HORS P&L</td></tr>
                 <Tr label="Apport initial reçu" val={r.apport} valColor="var(--color-txt2)" />
@@ -100,18 +103,18 @@ export function PnLTab() {
               <div className="w-[26px] h-[26px] rounded-[5px] flex items-center justify-center text-[13px] shrink-0 bg-[var(--color-cyan-d)]">📈</div>
               <div>
                 <div className="font-bold text-[11.5px] text-[var(--color-txt)]">Indicateurs de Rentabilité</div>
-                <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[0.7px] mt-0.5">TRI Equity vs WACC · ROE · Spread · Marge nette</div>
+                <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[0.7px] mt-0.5">TRI Equity vs seuil · ROE après IBS · Spread · Marge nette</div>
               </div>
             </div>
             <div className="p-3">
               <div className="grid grid-cols-2 gap-2">
-                <RatioCard label="TRI Equity (IRR Annualisé)" val={`${fmt(pl.irrAnn * 100, 2)} %`} sub={`Seuil : WACC = ${fmt(hurdle * 100, 2)}%`} valColor="var(--color-cyan)">
-                  <TrafficLight label={triGood ? '✓ TRI > WACC' : triOk ? '⚠ TRI proche WACC' : '✗ TRI < WACC'} status={triGood ? 'good' : triOk ? 'warn' : 'bad'} />
+                <RatioCard label="TRI Equity (IRR Annualisé)" val={`${fmt(pl.irrAnn * 100, 2)} %`} sub={`Après IBS · seuil : ${fmt(hurdle * 100, 2)}%`} valColor="var(--color-cyan)">
+                  <TrafficLight label={triGood ? '✓ TRI > seuil' : triOk ? '⚠ TRI proche du seuil' : '✗ TRI < seuil'} status={triGood ? 'good' : triOk ? 'warn' : 'bad'} />
                 </RatioCard>
                 <RatioCard label="ROE Effectif Annualisé" val={`${fmt(pl.roeEff * 100, 2)} %`} sub={`Cible : ${fmt(r.atroe * 100, 1)}%/an`} valColor="var(--color-gold-l)">
                   <TrafficLight label={roeGood ? '✓ Objectif atteint' : roeOk ? '⚠ Proche objectif' : '✗ Sous objectif'} status={roeGood ? 'good' : roeOk ? 'warn' : 'bad'} />
                 </RatioCard>
-                <RatioCard label="Spread WACC / Coût Dette" val={`${fmt(pl.spread * 100, 2)} %`} sub="WACC - r_dette" valColor="var(--color-green)" />
+                <RatioCard label="Spread Taux locatif / Coût Dette" val={`${fmt(pl.spread * 100, 2)} %`} sub="Taux locatif - r_dette" valColor="var(--color-green)" />
                 <RatioCard label="VAN Equity (NPV Hurdle)" val={fDZA(pl.vanEquity)} sub={`Au taux cible ${fmt(r.atroe * 100, 1)}%`} valColor={vanGood ? "var(--color-green)" : "var(--color-red)"}>
                   <TrafficLight label={vanGood ? '✓ VAN > 0 (Valeur créée)' : '✗ VAN < 0 (Déficit)'} status={vanGood ? 'good' : 'bad'} />
                 </RatioCard>
@@ -119,7 +122,8 @@ export function PnLTab() {
               </div>
               <div className="mt-3 bg-[var(--color-bg2)] rounded-md p-2.5 px-3 text-[10px] text-[var(--color-txt3)] leading-[1.5]">
                 <div className="font-bold text-[var(--color-txt2)] mb-1">ℹ️ Méthode d'analyse financière & rentabilité</div>
-                • <strong>TRI Equity (IRR) :</strong> Calculé sur la séquence exacte des flux nets pour la banque (incluant marge Ijarah, markup SMR, ajustements commerciaux déduction faite des coûts de ressources, LGD et frais de gestion).<br/>
+                • <strong>TRI Equity (IRR) :</strong> Calculé sur les flux nets après IBS pour les fonds propres (marge Ijarah, markup SMR, ajustements commerciaux et montants refacturés, déduction faite des coûts de ressources, LGD, frais de gestion et risque VR), comparé au benchmark externe.<br/>
+                • <strong>ROE :</strong> Résultat net annuel après IBS rapporté aux fonds propres moyens immobilisés sur la durée du contrat.<br/>
                 • <strong>VAN Equity (NPV) :</strong> Actualisation des flux au taux hurdle cible des fonds propres ({fmt(r.atroe * 100, 1)}%). Une VAN positive certifie la surperformance économique.<br/>
                 • <strong>Tableau d'amortissement :</strong> Amortissement financier du capital strictement réconcilié avec la Valeur Résiduelle nette d'échéance et loyers contractuels lissés.
               </div>

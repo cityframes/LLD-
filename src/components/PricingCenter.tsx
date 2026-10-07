@@ -2,10 +2,11 @@ import React from 'react';
 import { useStateContext } from '../Store';
 import { V11_PROFILES, V11_SCENARIOS } from '../lib/types';
 import { fmt, fDZA } from '../lib/utils';
+import { computePnL } from '../lib/engine';
 import { cn } from '../lib/utils';
 
 export function PricingCenterV11() {
-  const { params, dispatch, engineResult, pnlResult } = useStateContext();
+  const { params, dispatch, engineResult, pnlResult: pnlBase } = useStateContext();
   
   const handleProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const pKey = e.target.value;
@@ -29,6 +30,9 @@ export function PricingCenterV11() {
   const mvr = Math.max(0, Math.min(0.70, engineResult.vrBrute / engineResult.achat + sc.vr));
   const rv = Math.max(0, mvr * (1 - prof.vrHaircut));
   const ftp = Math.max(0, engineResult.costDebt + sc.cost);
+  // Rentabilité recalculée sous le scénario : le loyer reste celui du contrat,
+  // la VR réalisée et le coût de refinancement subissent le choc.
+  const pnlResult = (sc.vr === 0 && sc.cost === 0) ? pnlBase : computePnL(engineResult, { vr: sc.vr, cost: sc.cost });
 
   let cls = 'good', label = '✓ ACCEPTABLE', why: string[] = [];
   const dmin = params.p_duree_min || 36;
@@ -39,8 +43,8 @@ export function PricingCenterV11() {
   if (pnlResult.roeEff < engineResult.atroe * 0.90) { cls = 'bad'; label = '✗ RENTABILITÉ INSUFFISANTE'; why.push('ROE sous seuil'); }
   else if (pnlResult.roeEff < engineResult.atroe && cls === 'good') { cls = 'warn'; label = '⚠ À VALIDER'; why.push('ROE sous cible'); }
   
-  if (pnlResult.irrAnn < engineResult.waccAnn * 0.90) { cls = 'bad'; label = '✗ TRI INSUFFISANT'; why.push('TRI sous seuil'); }
-  else if (pnlResult.irrAnn < engineResult.waccAnn && cls === 'good') { cls = 'warn'; label = '⚠ À VALIDER'; why.push('TRI sous WACC'); }
+  if (pnlResult.irrAnn < engineResult.hurdle * 0.90) { cls = 'bad'; label = '✗ TRI INSUFFISANT'; why.push('TRI sous seuil'); }
+  else if (pnlResult.irrAnn < engineResult.hurdle && cls === 'good') { cls = 'warn'; label = '⚠ À VALIDER'; why.push('TRI sous le seuil cible'); }
   
   if (mvr > 0.60 && cls === 'good') { cls = 'warn'; label = '⚠ À VALIDER'; why.push('VR élevée'); }
 
@@ -98,9 +102,9 @@ export function PricingCenterV11() {
           <KpiBox label="VR marché" val={`${fmt(mvr * 100, 1)} %`} />
           <KpiBox label="VR retenue" val={`${fmt(rv * 100, 1)} %`} />
           <KpiBox label="FTP / ressource" val={`${fmt(ftp * 100, 2)} %`} />
-          <KpiBox label="ROE effectif" val={`${fmt(pnlResult.roeEff * 100, 2)} %`} />
-          <KpiBox label="TRI" val={`${fmt(pnlResult.irrAnn * 100, 2)} %`} />
-          <KpiBox label="Marge nette" val={fDZA(pnlResult.mfn)} />
+          <KpiBox label="ROE après IBS (scénario)" val={`${fmt(pnlResult.roeEff * 100, 2)} %`} />
+          <KpiBox label="TRI après IBS (scénario)" val={`${fmt(pnlResult.irrAnn * 100, 2)} %`} />
+          <KpiBox label="Marge nette (scénario)" val={fDZA(pnlResult.mfn)} />
         </div>
       </div>
     </div>

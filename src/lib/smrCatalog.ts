@@ -669,11 +669,21 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
     lastDoneMonth[op.id] = 0;
   });
 
-  // Paliers de 10 000 km
+  // Calendrier des passages atelier :
+  //  - chaque palier de 10 000 km,
+  //  - chaque date anniversaire (12, 24, 36… mois) pour les échéances par le temps
+  //    (vidange annuelle, liquide de frein…) quand le kilométrage annuel est faible.
+  const events = new Map<number, number>(); // mois -> km au compteur
   for (let mKm = startStep; mKm <= maxKm; mKm += stepKm) {
-    const kmDoneSinceStart = mKm - kmActuel;
-    const progressRatio = kmDoneSinceStart / kmTotal;
-    const approxMonth = Math.min(dureeMois, Math.max(1, Math.round(progressRatio * dureeMois)));
+    const month = Math.min(dureeMois, Math.max(1, Math.round(((mKm - kmActuel) / kmTotal) * dureeMois)));
+    if (!events.has(month)) events.set(month, mKm);
+  }
+  for (let month = 12; month < dureeMois; month += 12) {
+    if (!events.has(month)) events.set(month, Math.round(kmActuel + kmTotal * month / dureeMois));
+  }
+  const schedule = [...events.entries()].sort((a, b) => a[0] - b[0]);
+
+  for (const [approxMonth, mKm] of schedule) {
     const approxYear = Math.ceil(approxMonth / 12);
     const inflationFactor = Math.pow(1 + inflationRate, (approxMonth - 1) / 12);
 
@@ -787,7 +797,8 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
   const totalAvecMargeHT = totalApresRemiseHT + margeBanqueAmountHT;
 
   // Provision pour aléas / imprévus
-  const provisionAleasAmountHT = totalAvecMargeHT * aleasPct;
+  // Provision calculée sur le coût atelier (après remise), hors marge banque
+  const provisionAleasAmountHT = totalApresRemiseHT * aleasPct;
   const budgetTotalHT = totalAvecMargeHT + provisionAleasAmountHT;
   const budgetTotalTTC = budgetTotalHT * (1 + tva);
 

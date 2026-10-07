@@ -43,6 +43,7 @@ export function Header() {
       ['Hamish Jiddiyyah', engineResult.depot],
       ['VR nette HT', engineResult.vrNette],
       ['WACC annuel', engineResult.waccAnn],
+      ['Taux locatif annuel', engineResult.rateLocAnn],
       ['Loyer HT/mois', engineResult.loyerHT],
       ['TVA/mois', engineResult.tvaFi],
       ['Loyer TTC/mois', engineResult.loyerTTC],
@@ -50,7 +51,8 @@ export function Header() {
       ['Km supplémentaire', engineResult.kmSup],
       ['TRI Equity', pnlResult.irrAnn],
       ['ROE effectif', pnlResult.roeEff],
-      ['Marge financière nette', pnlResult.mfn]
+      ['Marge financière nette', pnlResult.mfn],
+      ['Résultat net après IBS', pnlResult.resultatNet]
     ];
     
     const amort = [['Mois', 'Capital début', 'Revenu Ijarah', 'Amortissement', 'LGD', 'Capital fin', 'SMR', 'Pneus', 'Mobilité', 'Remplacement', 'Markup SMR', 'Takaful', 'Vignette', 'Adj.', 'HT', 'TVA', 'TTC'],
@@ -60,14 +62,17 @@ export function Header() {
     const pnl = [['P&L', 'Montant'],
       ['Revenu Ijarah', pnlResult.sumRevIj],
       ['Markup SMR', pnlResult.smrMkupTot],
-      ['Lease Adjustment positif', pnlResult.laPosTotal],
+      ['Ajustement de loyer', pnlResult.laTotal],
+      ['LGD & frais refacturés', pnlResult.passTotal],
       ['PNB brut', pnlResult.pnbBrut],
       ['Coût dette', pnlResult.sumDebtCost],
       ['LGD', pnlResult.sumLGD],
-      ['Risque VR', pnlResult.vrRiskProv],
+      ['Risque VR', pnlResult.vrCharge],
       ['Frais admin', pnlResult.sumAdmin],
       ['Charges directes', pnlResult.chargesTotal],
-      ['MFN', pnlResult.mfn]
+      ['MFN', pnlResult.mfn],
+      ['IBS', pnlResult.ibsAmount],
+      ['Résultat net', pnlResult.resultatNet]
     ];
 
     const wb = XLSX.utils.book_new();

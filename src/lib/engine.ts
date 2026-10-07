@@ -95,7 +95,10 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
 
   const waccAnn = costDebt * (1 - eqPct) + atroe * eqPct;
   const waccM = r2m(waccAnn);
-  const pmtFin = pmt(waccM, duree, besoin, vrNette);
+  // Taux locatif Ijarah = coût des ressources (WACC) + marge commerciale cible
+  const rateLocAnn = waccAnn + targetMargin;
+  const rateLocM = r2m(rateLocAnn);
+  const pmtFin = pmt(rateLocM, duree, besoin, vrNette);
 
   let takMDmensHT = 0;
   if (params.veh_idx >= 0 && CATALOG[params.veh_idx]) {
@@ -115,7 +118,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   let sumLGD = 0;
   let sumRevIj = 0;
   for (let m = 1; m <= duree; m++) {
-    const revIj = tempBal * waccM;
+    const revIj = tempBal * rateLocM;
     const amortC = m === duree ? (tempBal - vrNette) : (pmtFin - revIj);
     const lgdM = tempBal * lgd / 12;
     sumLGD += lgdM;
@@ -139,7 +142,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
 
   for (let m = 1; m <= duree; m++) {
     const capDeb = bal;
-    const revIj = bal * waccM;
+    const revIj = bal * rateLocM;
     const amortC = m === duree ? (capDeb - vrNette) : (pmtFin - revIj);
     const lgdM = capDeb * lgd / 12;
     const capFin = m === duree ? vrNette : bal - amortC;
@@ -171,68 +174,92 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
 
   return {
     achat, capex, apport, depot, vrBrute, vrNette, vrBruteTTC, vrNetteTTC, vrFrais, vrNegative,
-    waccAnn, waccM, besoin, duree, kmTotal,
+    waccAnn, waccM, rateLocAnn, rateLocM, besoin, duree, kmTotal,
     pmtFin, amortM_avg, revM_avg, riskM, admin, blocFi, sumLGD,
     provSMR, provPneu, smrMkupM, provAleasM, provMob, provAssist, provGestion, vehMens, blocSe,
     takMDmensHT, takRCmensHT, takHT, vignM, blocTa,
     leaseAdj, blocLa,
     loyerHT: loyerHT2, tvaFi: tvaFi2, loyerTTC,
     prk, kmSup, rows, smrPlan,
-    costDebt, eqPct, atroe, lgd, riskVrPct, vrRiskProv, passLGD, passAdmin, targetMargin
+    costDebt, eqPct, atroe, lgd, riskVrPct, vrRiskProv, passLGD, passAdmin, targetMargin,
+    ibs: (params.p_ibs ?? 26) / 100,
+    hurdle: (params.p_hurdle_externe || params.p_atroe) / 100
   };
 }
 
-export function computePnL(r: ReturnType<typeof computeEngine>) {
+export interface PnLShock {
+  vr: number;   // Choc sur la VR réalisée, en fraction du prix d'achat (ex: -0.08)
+  cost: number; // Choc sur le coût de refinancement annuel (ex: +0.01)
+}
+
+export function computePnL(r: ReturnType<typeof computeEngine>, shock: PnLShock = { vr: 0, cost: 0 }) {
   const eqPct = r.eqPct;
-  const costDebtM = r2m(r.costDebt);
+  const costDebtM = r2m(Math.max(0, r.costDebt + shock.cost));
   const equityInvested = r.besoin * eqPct;
   const cfEquity = [-equityInvested];
 
+  // Montants refacturés au client et inclus dans le loyer (cf. blocFi)
+  const passM = (r.passLGD ? r.riskM : 0) + (r.passAdmin ? r.admin : 0);
+
+  // VR réellement encaissée dans le scénario (le loyer, lui, reste celui du contrat)
+  const vrRealisee = Math.max(0, r.vrNette + shock.vr * r.achat);
+  const vrLoss = r.vrNette - vrRealisee;
+
   let sumDebtCost = 0;
+  let sumBal = 0;
 
   for (const row of r.rows) {
     const debtCostM = row.capDeb * (1 - eqPct) * costDebtM;
     sumDebtCost += debtCostM;
-    // Flux net de trésorerie pour les fonds propres bancaires :
-    // Revenu locatif + Markup SMR + Ajustement loyer positif - LGD - Frais admin - Coût dette + Amortissement equity
-    const flowM = (row.revM + r.smrMkupM + (r.leaseAdj > 0 ? r.leaseAdj : 0))
-      - (row.lgdM + r.admin + debtCostM)
-      + (row.amortM * eqPct);
-    cfEquity.push(flowM);
+    sumBal += row.capDeb;
+    // Résultat avant impôt du mois :
+    // Revenu locatif + Markup SMR + Ajustement de loyer (+/-) + LGD/frais refacturés - LGD - Frais admin - Coût dette
+    let profitM = (row.revM + r.smrMkupM + r.leaseAdj + passM)
+      - (row.lgdM + r.admin + debtCostM);
+    if (row.m === r.duree) profitM -= r.vrRiskProv + vrLoss;
+    // Flux fonds propres : résultat après IBS + quote-part equity de l'amortissement
+    cfEquity.push(profitM * (1 - r.ibs) + row.amortM * eqPct);
   }
-  
+
   // Encaissement terminal de la quote-part de valeur résiduelle nette sur fonds propres
   cfEquity[r.duree] += r.vrNette * eqPct;
 
   const sumAdmin = r.admin * r.duree;
   const smrMkupTot = r.smrMkupM * r.duree;
-  const laPosTotal = r.leaseAdj > 0 ? r.leaseAdj * r.duree : 0;
+  const laTotal = r.leaseAdj * r.duree;
+  const passTotal = passM * r.duree;
   const sumRevIj = r.rows.reduce((a, x) => a + x.revM, 0);
   const sumLGD = r.rows.reduce((a, x) => a + x.lgdM, 0);
+  const vrCharge = r.vrRiskProv + vrLoss;
 
-  const pnbBrut = sumRevIj + smrMkupTot + laPosTotal;
-  const chargesTotal = sumDebtCost + sumLGD + sumAdmin + r.vrRiskProv;
+  const pnbBrut = sumRevIj + smrMkupTot + laTotal + passTotal;
+  const chargesTotal = sumDebtCost + sumLGD + sumAdmin + vrCharge;
   const mfn = pnbBrut - chargesTotal;
+  const ibsAmount = mfn * r.ibs;
+  const resultatNet = mfn - ibsAmount;
 
   const irrM = irr(cfEquity, 0.005);
   const irrAnn = Math.pow(1 + irrM, 12) - 1;
 
-  // VAN (Valeur Actuelle Nette) au taux hurdle cible Equity (atroe)
+  // VAN (Valeur Actuelle Nette) au taux cible Equity (atroe)
   const atroeM = r2m(r.atroe);
   const vanEquity = npv(atroeM, cfEquity);
 
   // VAN au taux WACC du contrat
   const vanWacc = npv(r.waccM, cfEquity);
 
+  // ROE après IBS, rapporté aux fonds propres moyens immobilisés (l'encours décroît)
+  const encoursMoy = sumBal / r.duree;
+  const equityMoy = encoursMoy * eqPct;
+  const resultatNetAnn = (resultatNet / r.duree) * 12;
+  const roeEff = equityMoy > 0 ? resultatNetAnn / equityMoy : 0;
   const mfnAnn = (mfn / r.duree) * 12;
-  const roeEff = equityInvested > 0 ? mfnAnn / equityInvested : 0;
-  const spread = r.waccAnn - r.costDebt;
-  const encoursMoy = (r.besoin + r.vrNette) / 2;
+  const spread = r.rateLocAnn - r.costDebt;
   const mfnRate = encoursMoy > 0 ? mfnAnn / encoursMoy : 0;
 
   return {
-    equityInvested, sumRevIj, sumLGD, sumDebtCost, sumAdmin,
-    smrMkupTot, laPosTotal, pnbBrut, chargesTotal, mfn,
-    irrAnn, vanEquity, vanWacc, roeEff, spread, mfnRate, vrRiskProv: r.vrRiskProv
+    equityInvested, equityMoy, sumRevIj, sumLGD, sumDebtCost, sumAdmin,
+    smrMkupTot, laTotal, passTotal, pnbBrut, chargesTotal, mfn, ibsAmount, resultatNet,
+    irrAnn, vanEquity, vanWacc, roeEff, spread, mfnRate, vrRiskProv: r.vrRiskProv, vrLoss, vrCharge
   };
 }
