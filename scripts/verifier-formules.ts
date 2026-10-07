@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { DEFAULTS, SimulatorParams } from '../src/lib/types';
 import { computeEngine, computePnL } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
+import { validationAlerts, canSubmit, nextRef, Cotation } from '../src/lib/team';
 import { marginForRentTTC, marginForRoe, scenarioTable, optionsGrid, adjustedVrPct } from '../src/lib/pricing';
 
 let ok = 0;
@@ -121,5 +122,32 @@ check('Grille d\'options : la case courante redonne la simulation, et la VR bais
   assert.ok(adjustedVrPct(DEFAULTS, 60, 30000) < adjustedVrPct(DEFAULTS, 36, 30000));
   assert.ok(g.every(row => row[0].loyerHT > row[3].loyerHT), '24 mois plus cher que 60 mois');
 });
+
+check('Délégation : l\'offre budget passe sans visa, une remise demande le visa', () => {
+  assert.deepEqual(validationAlerts(DEFAULTS), []);
+  assert.ok(validationAlerts({ ...DEFAULTS, p_lease_adj: -5000 }).some(a => a.startsWith('Remise')));
+  assert.ok(validationAlerts({ ...DEFAULTS, p_target_margin: 3 }).some(a => a.startsWith('Marge')));
+});
+
+check('Visa : valable seulement pour la version visée', () => {
+  const c = { params: { ...DEFAULTS, p_lease_adj: -5000 }, updatedAt: 'v2', alerts: [] } as unknown as Cotation;
+  assert.equal(canSubmit(c, undefined), false, 'sans visa');
+  assert.equal(canSubmit(c, { decision: 'validee', by: 'x', at: '', comment: '', version: 'v1' }), false, 'visa d\'une ancienne version');
+  assert.equal(canSubmit(c, { decision: 'validee', by: 'x', at: '', comment: '', version: 'v2' }), true);
+});
+
+await (async () => {
+  const docs: Record<string, any> = {};
+  const db = { doc: (p: string) => ({
+    acquire: async () => ({ acquired: true }),
+    get: async () => ({ exists: p in docs, data: () => docs[p] }),
+    set: async (d: any) => { docs[p] = d; },
+  }) };
+  const a = await nextRef(db, 'h'); const b = await nextRef(db, 'h');
+  check('Numérotation des cotations : LLD-AAAA-0001 puis 0002', () => {
+    const y = new Date().getFullYear();
+    assert.equal(a, `LLD-${y}-0001`); assert.equal(b, `LLD-${y}-0002`);
+  });
+})();
 
 console.log(`\n${ok} contrôle(s) réussi(s)`);

@@ -7,6 +7,7 @@ import { Catalog } from './Catalog';
 import { PricingCenterV11 } from './PricingCenter';
 import { ClientInfo } from './ClientInfo';
 import { OptionsGrid } from './OptionsGrid';
+import { SaveCotation } from './SaveCotation';
 import { fmt, fDZA } from '../lib/utils';
 import { InputRow } from './ui/InputRow';
 
@@ -35,6 +36,7 @@ export function SimulatorTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_390px] gap-4.5 items-start">
         <div>
+          <SaveCotation />
           <ClientInfo />
           <ControlsV10 />
           <Catalog />

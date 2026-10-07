@@ -3,18 +3,25 @@ import { SimulatorTab } from './SimulatorTab';
 import { SmrTab } from './SmrTab';
 import { PnLTab } from './PnLTab';
 import { AmortizationTab } from './AmortizationTab';
+import { CotationsTab } from './CotationsTab';
+import { DashboardTab } from './DashboardTab';
+import { useTeam } from '../Team';
 import { cn } from '../lib/utils';
 
 export function Tabs() {
   const [activeTab, setActiveTab] = useState('sim');
+  const { isChef, cotations, validations } = useTeam();
+  const aValider = isChef ? cotations.filter(c => c.statut === 'a_valider' && !(validations[c.ref] && validations[c.ref].version === c.updatedAt)).length : 0;
 
   return (
     <>
-      <div className="flex mb-4.5 bg-[var(--color-card)] border border-[var(--color-border-main)] rounded-[10px] overflow-hidden">
+      <div className="flex flex-wrap mb-4.5 bg-[var(--color-card)] border border-[var(--color-border-main)] rounded-[10px] overflow-hidden">
         <TabButton active={activeTab === 'sim'} onClick={() => setActiveTab('sim')}>🧮 Simulateur & Pricing</TabButton>
         <TabButton active={activeTab === 'smr'} onClick={() => setActiveTab('smr')}>🔧 Plan SMR 10 000 KM</TabButton>
         <TabButton active={activeTab === 'pnl'} onClick={() => setActiveTab('pnl')}>📊 Rentabilité Banque & P&L</TabButton>
         <TabButton active={activeTab === 'amort'} onClick={() => setActiveTab('amort')}>📋 Tableau d'Amortissement</TabButton>
+        <TabButton active={activeTab === 'cot'} onClick={() => setActiveTab('cot')}>📁 Cotations{aValider > 0 && <span className="ml-1 px-1.5 rounded-full bg-[#e0a04a] text-[#0d1e38] text-[9px]">{aValider}</span>}</TabButton>
+        <TabButton active={activeTab === 'dash'} onClick={() => setActiveTab('dash')}>📈 Tableau de bord</TabButton>
       </div>
 
       <div className={cn("hidden", activeTab === 'sim' && "block")}>
@@ -29,6 +36,8 @@ export function Tabs() {
       <div className={cn("hidden", activeTab === 'amort' && "block")}>
         <AmortizationTab />
       </div>
+      {activeTab === 'cot' && <CotationsTab onOpen={() => setActiveTab('sim')} />}
+      {activeTab === 'dash' && <DashboardTab />}
     </>
   );
 }
