@@ -43,7 +43,7 @@ export function ControlsV10() {
     
     const target = params.p_target_rent;
     if (engineResult.targetMargin > 0) {
-      msgs.push(`Marge cible pricing : ${fmt(engineResult.targetMargin * 100, 2)}%/an`);
+      msgs.push(`Taux locatif ${fmt(engineResult.rateLocAnn * 100, 2)}% = WACC ${fmt(engineResult.waccAnn * 100, 2)}% + marge ${fmt(engineResult.targetMargin * 100, 2)}%`);
     }
     if (target > 0) {
       const delta = (engineResult.loyerTTC - target) / target * 100;
@@ -57,8 +57,8 @@ export function ControlsV10() {
       if (level === 'success') level = 'warning';
     }
     
-    if (pnlResult.irrAnn < engineResult.waccAnn && level === 'success') level = 'warning';
-    msgs.push(`TRI ${fmt(pnlResult.irrAnn * 100, 2)}% vs WACC ${fmt(engineResult.waccAnn * 100, 2)}%`);
+    if (pnlResult.irrAnn < engineResult.hurdle && level === 'success') level = 'warning';
+    msgs.push(`TRI après IBS ${fmt(pnlResult.irrAnn * 100, 2)}% vs seuil ${fmt(engineResult.hurdle * 100, 2)}%`);
     msgs.push('Fiscalité LLD DZ : Takaful & Vignette refacturés en débours exonérés (Art. 9 CTCA). TVA 19% appliquée sur Finance, Services SMR et Lease Adjustment.');
 
     return { level, msgs };
@@ -103,7 +103,7 @@ export function ControlsV10() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3">
           <InputRow label="Durée minimale autorisée" sub="Politique LLD" val={params.p_duree_min} suffix="mois" onChange={v => handleNumChange('p_duree_min', v)} />
           <InputRow label="Durée maximale autorisée" sub="Politique LLD" val={params.p_duree_max} suffix="mois" onChange={v => handleNumChange('p_duree_max', v)} />
-          <InputRow label="Marge commerciale cible" sub="Benchmark indépendant" val={params.p_target_margin} suffix="%/an" step="0.1" onChange={v => handleNumChange('p_target_margin', v)} />
+          <InputRow label="Marge commerciale cible" sub="Ajoutée au WACC dans le taux locatif" val={params.p_target_margin} suffix="%/an" step="0.1" onChange={v => handleNumChange('p_target_margin', v)} />
           
           <div className="flex items-start justify-between py-1.5 border-b border-[var(--color-border-light)] gap-2">
             <div className="flex-1 min-w-0">

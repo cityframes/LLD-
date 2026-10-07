@@ -26,6 +26,7 @@ export interface SimulatorParams {
   p_cost_debt: number;
   p_equity_pct: number;
   p_atroe: number;
+  p_ibs: number;            // Taux IBS appliqué au résultat du contrat (%)
   p_hurdle_externe: number;
   p_risk: number;
   p_risk_vr: number;
@@ -102,6 +103,7 @@ export const DEFAULTS: SimulatorParams = {
   p_cost_debt: 5.5,
   p_equity_pct: 10,
   p_atroe: 15,
+  p_ibs: 26,
   p_hurdle_externe: 15,
   p_risk: 1.0,
   p_risk_vr: 5,

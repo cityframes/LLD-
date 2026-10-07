@@ -66,6 +66,7 @@ export function Params() {
           <InputRow label="Coût de Refinancement Participatif" sub="Sukuk / Wakala / dépôts d'investissement" val={params.p_cost_debt} suffix="%/an" step="0.1" onChange={v => handleNumChange('p_cost_debt', v)} />
           <InputRow label="Ratio Fonds Propres (Equity)" val={params.p_equity_pct} suffix="%" onChange={v => handleNumChange('p_equity_pct', v)} />
           <InputRow label="Cible Rentabilité Fonds Propres (ROE)" val={params.p_atroe} suffix="%/an" onChange={v => handleNumChange('p_atroe', v)} />
+          <InputRow label="Taux IBS" sub="Impôt sur le résultat du contrat (ROE et TRI après impôt)" val={params.p_ibs} suffix="%" step="1" onChange={v => handleNumChange('p_ibs', v)} />
           <InputRow label="Benchmark Marché Externe (Hurdle Indépendant)" sub="✓ v8 : taux de référence externe, indépendant du WACC interne — évite la circularité ROE→WACC→TRI" colorSub="var(--color-cyan)" val={params.p_hurdle_externe} suffix="%/an" step="0.1" onChange={v => handleNumChange('p_hurdle_externe', v)} />
           <InputRow label="Provision Risque Client (LGD)" sub="✓ v7 : balance décroissante exacte" colorSub="var(--color-cyan)" val={params.p_risk} suffix="%/an" step="0.1" onChange={v => handleNumChange('p_risk', v)} />
           <InputRow label="Provision Risque Valeur Résiduelle" sub="✓ v9 : risque de réalisation VR distinct du risque crédit — % appliqué à la VR nette" colorSub="var(--color-orange)" val={params.p_risk_vr} suffix="% VR" step="0.5" onChange={v => handleNumChange('p_risk_vr', v)} />
