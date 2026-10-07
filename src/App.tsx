@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StateProvider, useStateContext } from './Store';
 import { Header } from './components/Header';
 import { Tabs } from './components/Tabs';
+import { TeamProvider } from './Team';
 
 function AppLayout() {
   const { isCorporate } = useStateContext();
@@ -25,7 +26,9 @@ function AppLayout() {
 export default function App() {
   return (
     <StateProvider>
-      <AppLayout />
+      <TeamProvider>
+        <AppLayout />
+      </TeamProvider>
     </StateProvider>
   );
 }
