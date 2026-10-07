@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #080f1a;
+  --color-bg2: #0c1828;
+  --color-card: #0f2035;
+  --color-card2: #132540;
+  
+  --color-gold: #c9a84c;
+  --color-gold-l: #e8cc88;
+  --color-gold-d: rgba(201,168,76,.10);
+  
+  --color-teal: #22a090;
+  --color-red: #c0392b;
+  --color-red-d: rgba(192,57,43,.14);
+  --color-green: #27ae7a;
+  --color-green-d: rgba(39,174,122,.10);
+  --color-blue: #2d6fbd;
+  --color-blue-d: rgba(45,111,189,.10);
+  --color-orange: #d4882a;
+  --color-orange-d: rgba(212,136,42,.10);
+  --color-purple: #8e44ad;
+  --color-purple-d: rgba(142,68,173,.10);
+  --color-cyan: #17a8c8;
+  --color-cyan-d: rgba(23,168,200,.10);
+  
+  --color-txt: #ddd5c0;
+  --color-txt2: #8fa0b4;
+  --color-txt3: #4d6278;
+  
+  --color-border-main: rgba(180,150,80,.18);
+  --color-border-light: rgba(180,150,80,.07);
+
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-jetbrains: 'JetBrains Mono', monospace;
+  --font-mulish: 'Mulish', sans-serif;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-txt);
+  font-family: var(--font-mulish);
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 15% 0%, rgba(26,122,110,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(201,168,76,.04) 0%, transparent 55%);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(201,168,76,0.035)' stroke-width='0.5'%3E%3Cpolygon points='30,2 58,16 58,44 30,58 2,44 2,16'/%3E%3Cpolygon points='30,10 50,20 50,40 30,50 10,40 10,20'/%3E%3C/g%3E%3C/svg%3E");
+  z-index: -1;
+}
+
+body.corporate {
+  --color-gold: #2d6fbd;
+  --color-gold-l: #5fa0e0;
+  --color-gold-d: rgba(45,111,189,.10);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-card2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(180,150,80,.25); }
+
+/* No-spinner inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+

@@ -1,0 +1,8 @@
+{
+  "name": "Simulateur Ijarah LLD - Al Salam Bank",
+  "description": "Simulateur de Location Longue Durée (Ijarah) pour Al Salam Bank, avec calculs de P&L, marges et amortissement.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
