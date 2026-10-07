@@ -2,6 +2,7 @@ import React from 'react';
 import { useStateContext } from '../Store';
 import { fmt } from '../lib/utils';
 import { InputRow } from './ui/InputRow';
+import { marginForRentTTC, marginForRoe } from '../lib/pricing';
 
 export function ControlsV10() {
 
@@ -64,20 +65,22 @@ export function ControlsV10() {
     return { level, msgs };
   };
 
+  const [solverMsg, setSolverMsg] = React.useState('');
+
+  const applyMargin = (m: number | null, what: string) => {
+    if (m === null) { setSolverMsg(`${what} : cible hors d'atteinte (marge entre −10 % et 40 %).`); return; }
+    dispatch({ type: 'SET_PARAM', payload: { key: 'p_target_margin', value: m } });
+    setSolverMsg(`${what} : marge commerciale ajustée à ${fmt(m, 2)} %/an.`);
+  };
+
+  // Calcul inverse : marge qui donne le loyer TTC imposé par le client
   const handleGoalSeek = () => {
     if (!params.p_target_rent || params.p_target_rent <= 0) return;
-    // loyerTTC = (blocFi + blocSe + leaseAdj) * (1 + TVA) + blocTa
-    // leaseAdj = (targetTTC - blocTa) / (1 + TVA) - (blocFi + blocSe)
-    const targetTTC = params.p_target_rent;
-    const blocTa = engineResult.blocTa;
-    const blocFi = engineResult.blocFi;
-    const blocSe = engineResult.blocSe;
-    const TVA_RATE = 0.19;
-    const targetBaseHT = (targetTTC - blocTa) / (1 + TVA_RATE);
-    const neededAdj = Math.round(targetBaseHT - (blocFi + blocSe));
-    dispatch({ type: 'SET_PARAM', payload: { key: 'p_lease_adj', value: neededAdj } });
-    dispatch({ type: 'SET_PARAM', payload: { key: 'p_adj_type', value: 'commercial' } });
+    applyMargin(marginForRentTTC(params, params.p_target_rent), 'Loyer imposé');
   };
+
+  // Calcul inverse : marge qui atteint le ROE cible des fonds propres
+  const handleRoeSeek = () => applyMargin(marginForRoe(params, params.p_atroe), `ROE cible ${fmt(params.p_atroe, 1)} %`);
 
   const validation = getValidation();
   let badgeClass = "flex items-start gap-2 rounded-md p-2 mt-2.5 text-[10.5px] leading-[1.4] ";
@@ -128,16 +131,27 @@ export function ControlsV10() {
           </div>
 
           <div>
-            <InputRow label="Objectif de loyer TTC" sub="Optionnel · contrôle commercial" val={params.p_target_rent} suffix="DZA/mois" onChange={v => handleNumChange('p_target_rent', v)} />
+            <InputRow label="Objectif de loyer TTC" sub="Loyer imposé par le client · calcul inverse de la marge" val={params.p_target_rent} suffix="DZA/mois" onChange={v => handleNumChange('p_target_rent', v)} />
             {params.p_target_rent > 0 && Math.abs(engineResult.loyerTTC - params.p_target_rent) > 1 && (
               <button
                 type="button"
                 onClick={handleGoalSeek}
                 className="w-full mt-1.5 py-1 px-2.5 bg-gradient-to-r from-[var(--color-purple)] to-[#6c3483] hover:opacity-90 text-white rounded text-[10px] font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
-                <span>⚡ Calibrer le loyer à l'objectif (Goal Seek)</span>
+                <span>⚡ Trouver la marge qui donne ce loyer</span>
               </button>
             )}
+          </div>
+
+          <div className="flex flex-col justify-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleRoeSeek}
+              className="w-full py-1.5 px-2.5 bg-gradient-to-r from-[var(--color-gold)] to-[#9a6c1a] hover:opacity-90 text-[#0d1e38] rounded text-[10px] font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <span>🎯 Loyer minimum pour le ROE cible ({fmt(params.p_atroe, 1)} %)</span>
+            </button>
+            {solverMsg && <div className="text-[10px] text-[var(--color-gold-l)] leading-[1.35]">{solverMsg}</div>}
           </div>
         </div>
         

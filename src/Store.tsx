@@ -36,17 +36,17 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
   const [isCorporate, setIsCorporate] = React.useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('ijarah_v9_params');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('ijarah_v12_params');
+      if (saved) {
         const parsed = JSON.parse(saved);
         dispatch({ type: 'LOAD', payload: { ...DEFAULTS, ...parsed } });
-      } catch (e) { }
-    }
+      }
+    } catch (e) { }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('ijarah_v9_params', JSON.stringify(params));
+    try { localStorage.setItem('ijarah_v12_params', JSON.stringify(params)); } catch (e) { }
   }, [params]);
 
   const engineResult = useMemo(() => computeEngine(params), [params]);
