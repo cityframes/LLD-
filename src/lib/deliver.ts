@@ -57,7 +57,7 @@ export async function renderPDF(doc: OfferDocument, onProgress?: (done: number, 
   host.style.cssText = 'position:fixed;left:-20000px;top:0;z-index:-1;pointer-events:none';
   const style = document.createElement('style');
   style.textContent = DOC_CSS + `.odp{width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;position:relative;overflow:hidden;padding:${PAD_TOP}px ${PAD_X}px ${PAD_BOTTOM}px}
-.odp .flow>*+*{margin-top:0}.odp .ft{position:absolute;left:${PAD_X}px;right:${PAD_X}px;bottom:18px;border-top:1px solid #e0e0e0;padding-top:5px;font-size:6.5pt;color:#999;display:flex;justify-content:space-between;gap:12px}`;
+.odp .flow>*+*{margin-top:0}.odp .ft{position:absolute;left:${PAD_X}px;right:${PAD_X}px;bottom:20px;font-size:6.5pt;color:#777;display:flex;justify-content:space-between;gap:12px}.odp .band{position:absolute;left:0;right:0;bottom:0;height:10px;background:#071530}`;
   host.appendChild(style);
   document.body.appendChild(host);
 
@@ -65,7 +65,7 @@ export async function renderPDF(doc: OfferDocument, onProgress?: (done: number, 
     await document.fonts.ready;
     // Laisse la police arabe arriver si elle se charge encore
     if (doc.lang === 'ar' || doc.blocks.some(b => b.html.includes('class="cg"'))) {
-      try { await Promise.race([document.fonts.load("10pt 'Noto Naskh Arabic'"), new Promise(r => setTimeout(r, 2500))]); } catch { /* police système */ }
+      try { await Promise.race([document.fonts.load("10pt 'Noto Sans Arabic'"), new Promise(r => setTimeout(r, 2500))]); } catch { /* police système */ }
     }
 
     const maxFlow = PAGE_H - PAD_TOP - PAD_BOTTOM;
@@ -93,8 +93,11 @@ export async function renderPDF(doc: OfferDocument, onProgress?: (done: number, 
     pages.forEach((p, i) => {
       const ft = document.createElement('div');
       ft.className = 'ft';
-      ft.innerHTML = `<span>${footerText(doc)}</span><span style="white-space:nowrap;direction:ltr">${i + 1} / ${pages.length}</span>`;
+      ft.innerHTML = `<span dir="${dir}">${footerText(doc)}</span><span style="white-space:nowrap;direction:ltr">${i + 1} / ${pages.length}</span>`;
       p.appendChild(ft);
+      const band = document.createElement('div');
+      band.className = 'band';
+      p.appendChild(band);
     });
 
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });

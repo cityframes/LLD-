@@ -32,8 +32,8 @@ const T = {
     bank: 'Al Salam Bank', bankSub: 'Banque participative · Location Ijara longue durée',
     offre: 'Offre de location Ijara', flotte: 'Devis flotte · Location Ijara',
     sousTitre: 'Location longue durée de véhicules · Ijara opérationnelle',
-    ref: 'Référence', date: 'Date', validite: 'Offre valable 15 jours',
-    bailleur: 'Le bailleur (Al Mu\'ajjir)', preneur: 'Le preneur (Al Musta\'jir)',
+    ref: 'Référence offre', date: 'Date', edite: 'Édité le', validite: 'Validité',
+    bailleur: 'Bailleur', preneur: 'Le preneur / Raison sociale',
     denom: 'Dénomination', activite: 'Activité', banquePart: 'Banque participative agréée',
     nom: 'Raison sociale', adresse: 'Adresse', rc: 'RC / NIF', represente: 'Représenté par',
     loyerTTC: 'Loyer mensuel tout compris (TTC)', loyerTTCsub: 'Ijara, entretien, Takaful, taxes',
@@ -49,7 +49,7 @@ const T = {
     optionLigne: 'Option d\'achat', coutTotal: 'Coût total de l\'opération', recapNote: 'Coût total = loyers TTC, plus le prix de cession si l\'option est levée ; le Hamish Jiddiyyah est restitué. Montants en dinars algériens.',
     clauses: 'Conditions de l\'offre',
     clausesTxt: (annexe: boolean) => `La présente offre constitue l'« offre de location » (conditions particulières) au sens des conditions générales de l'Ijara opérationnelle${annexe ? ', jointes en annexe' : ''}, qui en font partie intégrante. Elle ne devient un contrat qu'après acceptation du dossier du preneur par Al Salam Bank. Le véhicule reste la propriété exclusive de la banque pendant toute la durée de la location ; le preneur en a l'usage sans droit de propriété. Toute modification des conditions tarifaires requiert l'accord écrit des deux parties. Offre valable 15 jours à compter de sa date d'émission.`,
-    signClient: 'Pour le preneur', signBanque: 'Pour Al Salam Bank, le bailleur',
+    signClient: 'Pour le preneur', signBanque: 'Pour Al Salam Bank',
     signClientTxt: 'Lu et approuvé : je reconnais avoir pris connaissance de la présente offre et des conditions générales, et j\'en accepte les termes.',
     signBanqueTxt: 'Sous réserve de l\'acceptation du dossier et de la réalisation des conditions suspensives.',
     signLigne: 'Nom, qualité et signature', signDate: 'Date', cachet: 'Cachet',
@@ -64,8 +64,8 @@ const T = {
     bank: 'بنك السلام الجزائر', bankSub: 'بنك تشاركي · الإجارة التشغيلية طويلة الأجل',
     offre: 'عرض إيجار', flotte: 'عرض إيجار أسطول مركبات',
     sousTitre: 'إيجار المركبات طويل الأجل · الإجارة التشغيلية',
-    ref: 'المرجع', date: 'التاريخ', validite: 'العرض صالح لمدة 15 يوماً',
-    bailleur: 'المؤجِّر', preneur: 'المستأجر',
+    ref: 'مرجع العرض', date: 'التاريخ', edite: 'صدر في', validite: 'مدة الصلاحية',
+    bailleur: 'المؤجِّر', preneur: 'المستأجر / التسمية الاجتماعية',
     denom: 'التسمية', activite: 'النشاط', banquePart: 'بنك تشاركي معتمد',
     nom: 'الاسم / التسمية الاجتماعية', adresse: 'العنوان', rc: 'السجل التجاري / NIF', represente: 'ممثَّل من طرف',
     loyerTTC: 'بدل الإيجار الشهري الشامل (متضمن الرسوم)', loyerTTCsub: 'الإجارة، الصيانة، التكافل، الرسوم',
@@ -81,7 +81,7 @@ const T = {
     optionLigne: 'خيار الشراء', coutTotal: 'التكلفة الإجمالية للعملية', recapNote: 'التكلفة الإجمالية = بدلات الإيجار متضمنة الرسوم، مضافاً إليها سعر التنازل عند ممارسة الخيار؛ ويُرَدّ هامش الجدية. المبالغ بالدينار الجزائري.',
     clauses: 'شروط العرض',
     clausesTxt: (annexe: boolean) => `يُعتبر هذا العرض «عرض الإيجار» (الشروط الخاصة) بمفهوم الشروط العامة للإجارة التشغيلية${annexe ? ' المرفقة به' : ''}، والتي تُشكّل جزءاً لا يتجزأ منه. ولا يصبح عقداً نافذاً إلا بعد قبول ملف المستأجر من طرف بنك السلام الجزائر. وتبقى المركبة ملكية خالصة للمؤجِّر طوال مدة الإيجار، وللمستأجر حق استعمالها دون أي حق ملكية. ولا يُعدَّل أي شرط من الشروط المالية إلا باتفاق كتابي بين الطرفين. العرض صالح لمدة 15 يوماً من تاريخ إصداره.`,
-    signClient: 'عن المستأجر', signBanque: 'عن المؤجِّر، بنك السلام الجزائر',
+    signClient: 'عن المستأجر', signBanque: 'عن بنك السلام الجزائر',
     signClientTxt: 'قرأت ووافقت: أُقرّ بأنني اطّلعت على هذا العرض وعلى الشروط العامة، وأقبل بنودها.',
     signBanqueTxt: 'مع مراعاة قبول الملف وتحقق الشروط الواقفة.',
     signLigne: 'الاسم والصفة والتوقيع', signDate: 'التاريخ', cachet: 'الختم',
@@ -119,97 +119,118 @@ function vehicleOf(p: SimulatorParams, lang: Lang) {
 /* --------------------------------------------------------------- styles */
 
 export const DOC_CSS = `
-.od{font-family:'Mulish','Segoe UI',Arial,sans-serif;font-size:9.5pt;line-height:1.45;color:#1a1a1a}
-.od[dir=rtl],.od [dir=rtl]{font-family:'Noto Naskh Arabic','Segoe UI','Tahoma',Arial,sans-serif;line-height:1.6}
+.od{font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:9pt;line-height:1.45;color:#000}
+.od [lang=ar],.od[dir=rtl] .ar,.od .ar{font-family:'Noto Sans Arabic',Arial,'Segoe UI',Tahoma,sans-serif}
+.od[dir=rtl]{font-family:'Noto Sans Arabic',Arial,'Segoe UI',Tahoma,sans-serif;line-height:1.6}
+.od .fr{font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;direction:ltr;unicode-bidi:embed}
 .od *{box-sizing:border-box}
-.od .hd{border-bottom:3px solid #c9a84c;padding-bottom:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.od .logo{display:flex;align-items:center;gap:10px}
-.od .mark{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#c9a84c,#9a6c1a);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:22pt;font-weight:700;color:#fff}
-.od .bank{font-family:Georgia,serif;font-size:17pt;font-weight:700;color:#0d1e38}
-.od[dir=rtl] .bank{font-family:'Noto Naskh Arabic',serif}
-.od .banksub{font-size:7.5pt;color:#666;margin-top:2px}
-.od .refb{text-align:end}
-.od .lbl{font-size:7pt;color:#888;text-transform:uppercase;letter-spacing:.5px}
-.od[dir=rtl] .lbl{text-transform:none;letter-spacing:0;font-size:7.5pt}
-.od .refv{font-family:'JetBrains Mono','Courier New',monospace;font-size:12pt;font-weight:700;color:#0d1e38;direction:ltr;unicode-bidi:embed}
-.od .banner{background:linear-gradient(135deg,#0d1e38,#1a3a60);color:#fff;border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.od .tmain{font-size:14pt;font-weight:700}
-.od .tsub{font-size:8pt;color:#e0c47a;margin-top:2px}
-.od .valid{color:#ffb0a0;font-weight:700;font-size:8pt;margin-top:3px}
-.od .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.od .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-.od .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
-.od .party{border:1.5px solid #0d1e38;border-radius:5px;overflow:hidden}
-.od .phead{background:#0d1e38;color:#e0c47a;font-size:8pt;font-weight:700;padding:4px 10px}
-.od .pbody{padding:7px 10px}
-.od .prow{display:flex;gap:6px;margin-bottom:3px;font-size:8.5pt;align-items:baseline}
-.od .prow .lbl{min-width:82px}
-.od .fill{flex:1;border-bottom:1px dotted #aaa;min-height:13px}
+.od .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.od .ttl{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.od .ttl .t1{font-size:16pt;font-weight:700}
+.od .ttl .t2{font-size:13pt;font-weight:700}
+.od .edit{display:flex;gap:14px;font-size:8.5pt;margin-top:6px;align-items:baseline}
+.od .wm{text-align:end;line-height:1.15}
+.od .wm .w1{font-family:'Noto Sans Arabic',Arial,sans-serif;font-size:15pt;font-weight:700;color:#071530}
+.od .wm .w2{font-size:15pt;font-weight:700;color:#071530;font-family:Arial,sans-serif;direction:ltr}
+.od .wm .w3{display:inline-block;width:46px;height:3px;background:#F2643B;border-radius:2px;margin-top:5px}
+.od .top{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;align-items:start;margin-bottom:6px}
+.od .fset{position:relative;border:2px solid #F2643B;border-radius:14px;padding:16px 16px 10px;margin-top:8px}
+.od .lgd{position:absolute;top:-9px;left:18px;right:18px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:8.5pt}
+.od .lgd span{background:#fff;padding:0 5px;white-space:nowrap}
+.od .lgd i{flex:1;height:2px;background:#F2643B}
+.od .cname{font-size:9.5pt;font-weight:700;margin:2px 0 6px}
+.od .fline{display:flex;gap:8px;align-items:baseline;font-size:8pt;margin-top:6px}
+.od .fline b{white-space:nowrap}
+.od .fill{flex:1;border-bottom:1px dotted #999;min-height:12px}
+.od .kv{display:grid;grid-template-columns:auto 10px 1fr auto;gap:2px 8px;align-items:baseline;font-size:8.5pt;margin-top:8px}
+.od .kv .k{font-weight:700;white-space:nowrap}
+.od .kv .v{text-align:end}
+.od .kv .a{font-weight:700;text-align:end;font-family:'Noto Sans Arabic',Arial,sans-serif;white-space:nowrap;direction:rtl}
+.od .kv>div{padding:5px 0}
+.od .stitle{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:11pt;font-weight:700;margin:14px 0 6px;padding-bottom:4px;border-bottom:3px double #c0c0c0}
+.od .stitle .alt{font-size:9pt;font-weight:700}
+.od .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px}
+.od .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 22px}
+.od .grid4{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px}
+.od .box{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;padding:5px 0;border-bottom:1px solid #e3e3e3}
+.od .box .lbl{font-weight:700;font-size:8.3pt}
+.od .box .val{text-align:end;font-size:9pt;white-space:nowrap;margin-inline-start:auto}
+.od .lbl{font-size:8pt;font-weight:700}
 .od .strong{font-weight:700}
-.od .hl{background:#fdf9ee;border:2px solid #c9a84c;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin:10px 0 8px}
-.od .hlv{font-family:'JetBrains Mono','Courier New',monospace;font-size:18pt;font-weight:700;color:#9a6c1a;direction:ltr;unicode-bidi:embed}
-.od .box{background:#f7f8fa;border:1px solid #e0e0e0;border-radius:4px;padding:6px 10px}
-.od .val{font-size:9.5pt;font-weight:700;color:#1a1a1a}
+.od .hl{position:relative;border:2px solid #F2643B;border-radius:14px;padding:16px 18px 10px;margin:16px 0 4px}
+.od .hlrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.od .hlv{font-size:20pt;font-weight:700;direction:ltr;unicode-bidi:embed}
+.od .hlu{font-size:8pt;color:#444;text-align:end}
+.od .sub{font-size:7.8pt;color:#444}
 .od .ltr{direction:ltr;unicode-bidi:embed;display:inline-block}
-.od .num{font-family:'JetBrains Mono','Courier New',monospace;direction:ltr;unicode-bidi:embed}
-.od .c-green{color:#1a7a50}.od .c-blue{color:#1a4a8a}.od .c-gold{color:#9a6c1a}.od .c-orange{color:#a05a10}
-.od .stitle{font-size:8.5pt;font-weight:700;color:#fff;background:#2d6fbd;padding:4px 10px;border-radius:4px;margin:10px 0 6px}
-.od[dir=ltr] .stitle{text-transform:uppercase;letter-spacing:.6px;font-size:8pt}
-.od .s-gold{background:#9a6c1a}.od .s-green{background:#27ae7a}.od .s-dark{background:#0d1e38}.od .s-violet{background:#7d3c98}
-.od .svc{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.od .svc div{font-size:8pt;padding:3px 7px;background:#f8f9fa;border:1px solid #e8e8e8;border-radius:3px}
-.od .svc div::before{content:'✓ ';color:#27ae7a;font-weight:700}
-.od .note{font-size:7.5pt;color:#555;margin-top:5px;background:#fffdf5;padding:5px 8px;border-radius:3px;border-inline-start:3px solid #c9a84c}
-.od table{width:100%;border-collapse:collapse;font-size:8.3pt}
-.od th{background:#eef1f6;color:#0d1e38;font-weight:700;padding:5px 6px;text-align:start;font-size:7.6pt}
-.od td{padding:5px 6px;border-bottom:1px solid #eee}
+.od .num{direction:ltr;unicode-bidi:embed}
+.od .c-green,.od .c-blue,.od .c-gold,.od .c-orange{font-weight:700}
+.od .svc{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px}
+.od .svc div{font-size:8.3pt;padding:4px 0;border-bottom:1px solid #e3e3e3}
+.od .svc div::before{content:'✓';color:#F2643B;font-weight:700;margin-inline-end:6px}
+.od .note{font-size:7.8pt;color:#333;margin-top:6px;padding-inline-start:8px;border-inline-start:3px solid #F2643B}
+.od table{width:100%;border-collapse:collapse;font-size:8.5pt}
+.od th{font-weight:700;padding:6px 5px;text-align:start;font-size:8pt;border-bottom:3px double #c0c0c0;vertical-align:bottom}
+.od th .ar{display:block;font-size:7.5pt;font-weight:700}
+.od td{padding:6px 5px;border-bottom:1px solid #e3e3e3}
 .od td.r,.od th.r{text-align:end}
 .od td.r{white-space:nowrap}
-.od tr.tot td{background:#0d1e38;color:#f0dc9c;font-weight:800;border:none}
-.od .clauses{background:#fff9f0;border:1px solid #f0d080;border-radius:5px;padding:8px 10px;font-size:7.8pt;color:#444;line-height:1.55}
-.od .signs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.od .sign{border:1.5px solid #ccc;border-radius:5px;padding:10px;min-height:118px;background:#fafafa}
-.od .signt{font-size:8.5pt;font-weight:700;color:#0d1e38;margin-bottom:3px}
-.od .signs .sub{font-size:7.3pt;color:#777;line-height:1.4}
-.od .sline{border-bottom:1px solid #aaa;margin-top:34px;margin-bottom:4px}
-.od .ann-h{font-size:13pt;font-weight:700;color:#0d1e38;border-bottom:3px solid #c9a84c;padding-bottom:6px;margin-bottom:4px}
-.od .ann-n{font-size:8pt;color:#777;margin-bottom:8px}
-.od .cg{direction:rtl;text-align:justify;font-family:'Noto Naskh Arabic','Segoe UI','Tahoma',Arial,sans-serif;font-size:8.6pt;line-height:1.62;color:#222}
-.od .cg-h{font-size:10pt;font-weight:700;color:#fff;background:#0d1e38;padding:3px 10px;border-radius:3px;margin-top:9px;margin-bottom:3px}
-.od .cg-s{font-weight:700;color:#9a6c1a;margin-top:5px}
+.od tr.tot td{font-weight:700;border-top:3px double #c0c0c0;border-bottom:none;padding-top:8px}
+.od .clauses{font-size:8pt;color:#222;line-height:1.6;text-align:justify}
+.od .signs{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px}
+.od .sign{position:relative;border:2px solid #F2643B;border-radius:14px;padding:16px 14px 10px;min-height:124px}
+.od .signs .sub{font-size:7.6pt;color:#444;line-height:1.4}
+.od .sline{border-bottom:1px solid #999;margin-top:30px;margin-bottom:4px}
+.od .ann-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13pt;font-weight:700;padding-bottom:5px;border-bottom:3px double #c0c0c0;margin-bottom:4px}
+.od .ann-n{font-size:8pt;color:#555;margin:4px 0 8px}
+.od .cg{direction:rtl;text-align:justify;font-family:'Noto Sans Arabic',Arial,'Segoe UI',Tahoma,sans-serif;font-size:8.4pt;line-height:1.65;color:#111}
+.od .cg-h{font-size:10pt;font-weight:700;color:#000;margin-top:10px;margin-bottom:3px;padding-inline-start:8px;border-inline-start:4px solid #F2643B}
+.od .cg-s{font-weight:700;color:#071530;margin-top:5px}
 .od .cg-li{padding-inline-start:14px;position:relative}
-.od .cg-li::before{content:'•';position:absolute;inset-inline-start:3px;color:#9a6c1a}
+.od .cg-li::before{content:'•';position:absolute;inset-inline-start:3px;color:#F2643B}
 .od .cg-p{margin:2px 0}
+.od .band{height:9px;background:#071530}
 `;
 
 /* ------------------------------------------------------------- fragments */
 
-function header(lang: Lang, ref: string, date: string, titre: string): DocBlock[] {
-  const t = T[lang];
+const other = (l: Lang): Lang => l === 'fr' ? 'ar' : 'fr';
+type Key = keyof typeof T['fr'];
+/** Texte dans l'autre langue, avec sa police et son sens d'écriture. */
+const alt = (lang: Lang, k: Key) => {
+  const o = other(lang);
+  return `<span class="alt ${o}" dir="${o === 'ar' ? 'rtl' : 'ltr'}">${T[o][k] as string}</span>`;
+};
+/** Titre de section bilingue, comme sur les documents de la banque. */
+const st = (lang: Lang, k: Key) => `<div class="stitle"><span>${T[lang][k] as string}</span>${alt(lang, k)}</div>`;
+/** Ligne « libellé français : valeur libellé arabe » (toujours de gauche à droite). */
+const kv = (k: Key, v: string) => `<div class="k fr">${T.fr[k] as string}</div><div>:</div><div class="v">${v}</div><div class="a">${T.ar[k] as string}</div>`;
+
+function header(lang: Lang, ref: string, date: string, titre: Key): DocBlock[] {
   return [{
-    html: `<div class="hd"><div class="logo"><div class="mark">ﺍ</div><div><div class="bank">${t.bank}</div><div class="banksub">${t.bankSub}</div></div></div>
-<div class="refb"><div class="lbl">${t.ref}</div><div class="refv">${esc(ref)}</div></div></div>
-<div class="banner"><div><div class="tmain">${titre}</div><div class="tsub">${t.sousTitre}</div></div>
-<div style="text-align:end"><div style="font-size:8.5pt">${t.date} : <span class="num">${esc(date)}</span></div><div class="valid">${t.validite}</div></div></div>`,
+    html: `<div class="hd"><div><div class="ttl"><span class="t1">${T[lang][titre] as string}</span>${alt(lang, titre).replace('class="alt', 'class="t2')}</div>
+<div class="edit"><span class="fr"><b>${T.fr.edite}</b> :</span><span class="num">${esc(date)}</span><span class="ar" dir="rtl"><b>${T.ar.edite}</b></span></div></div>
+<div class="wm"><div class="w1">بنك السلام</div><div class="w2">Al Salam Bank</div><div class="w3"></div></div></div>`,
   }];
 }
 
-function parties(lang: Lang, client: string): DocBlock {
-  const t = T[lang];
-  const row = (l: string, v?: string) => `<div class="prow"><span class="lbl">${l}</span>${v ? `<span class="strong">${v}</span>` : '<span class="fill"></span>'}</div>`;
+function parties(lang: Lang, client: string, ref: string, extra: [Key, string][] = []): DocBlock {
+  const line = (k: Key) => `<div class="fline"><b class="fr">${T.fr[k] as string}</b><span class="fill"></span><b class="ar" dir="rtl">${T.ar[k] as string}</b></div>`;
   return {
-    html: `<div class="grid2">
-<div class="party"><div class="phead">${t.bailleur}</div><div class="pbody">${row(t.denom, t.bank)}${row(t.activite, t.banquePart)}${row(t.represente)}</div></div>
-<div class="party"><div class="phead">${t.preneur}</div><div class="pbody">${row(t.nom, esc(client))}${row(t.adresse)}${row(t.rc)}${row(t.represente)}</div></div></div>`,
+    html: `<div class="top" dir="ltr">
+<div class="fset"><div class="lgd"><span class="fr">${T.fr.preneur}</span><i></i><span class="ar" dir="rtl">${T.ar.preneur}</span></div>
+<div class="cname" dir="auto">${esc(client) || '&nbsp;'}</div>${line('adresse')}${line('rc')}${line('represente')}</div>
+<div class="kv">${kv('ref', `<b class="num">${esc(ref)}</b>`)}${kv('bailleur', `<span class="fr">Al Salam Bank</span>`)}${kv('validite', lang === 'fr' ? '15 jours' : '<span dir="rtl">15 يوماً</span>')}${extra.map(([k, v]) => kv(k, v)).join('')}</div>
+</div>`,
   };
 }
 
 function clausesAndSignatures(lang: Lang, annexe: boolean): DocBlock[] {
   const t = T[lang];
-  const sign = (title: string, sub: string) => `<div class="sign"><div class="signt">${title}</div><div class="sub">${sub}</div><div class="sline"></div><div class="lbl">${t.signLigne}</div><div class="lbl" style="margin-top:6px">${t.signDate} : ____ / ____ / ________</div><div class="lbl" style="margin-top:4px">${t.cachet} :</div></div>`;
+  const sign = (k: Key, sub: string) => `<div class="sign" dir="ltr"><div class="lgd"><span class="fr">${T.fr[k] as string}</span><i></i><span class="ar" dir="rtl">${T.ar[k] as string}</span></div><div class="sub" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">${sub}</div><div class="sline"></div><div class="lbl" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">${t.signLigne}</div><div class="lbl" dir="${lang === 'ar' ? 'rtl' : 'ltr'}" style="margin-top:6px">${t.signDate} : ____ / ____ / ________ &nbsp; ${t.cachet} :</div></div>`;
   return [
-    { html: `<div class="stitle s-dark">${t.clauses}</div><div class="clauses">${t.clausesTxt(annexe)}</div>` },
-    { html: `<div class="signs">${sign(t.signClient, t.signClientTxt)}${sign(t.signBanque, t.signBanqueTxt)}</div>` },
+    { html: `${st(lang, 'clauses')}<div class="clauses">${t.clausesTxt(annexe)}</div>` },
+    { html: `<div class="signs">${sign('signClient', t.signClientTxt)}${sign('signBanque', t.signBanqueTxt)}</div>` },
   ];
 }
 
@@ -217,7 +238,7 @@ function annexBlocks(lang: Lang): DocBlock[] {
   const t = T[lang];
   const out: DocBlock[] = [{
     breakBefore: true,
-    html: `<div class="ann-h">${t.annexe}</div>${t.annexeNote ? `<div class="ann-n">${t.annexeNote}</div>` : ''}<div class="cg"><div style="text-align:center;font-size:12pt;font-weight:700;margin:4px 0 6px">${CG_TITRE}</div></div>`,
+    html: `<div class="ann-h"><span>${t.annexe}</span>${alt(lang, 'annexe')}</div>${t.annexeNote ? `<div class="ann-n">${t.annexeNote}</div>` : ''}<div class="cg"><div style="text-align:center;font-size:12pt;font-weight:700;margin:4px 0 6px">${CG_TITRE}</div></div>`,
   }];
   for (const [k, txt] of CG_IJARA) {
     const cls = k === 'h' ? 'cg-h' : k === 's' ? 'cg-s' : k === 'li' ? 'cg-li' : 'cg-p';
@@ -241,28 +262,28 @@ export function offerDocument(r: Engine, params: SimulatorParams, opts: DocOptio
   const money = (v: number, c = '') => `<span class="num ${c}">${n0(v)}</span> ${da}`;
 
   const blocks: DocBlock[] = [
-    ...header(lang, ref, date, t.offre),
-    parties(lang, params.clientName || ''),
+    ...header(lang, ref, date, 'offre'),
+    parties(lang, params.clientName || '', ref),
     {
-      html: `<div class="hl"><div><div style="font-size:10.5pt;font-weight:700;color:#0d1e38">${t.loyerTTC}</div><div style="font-size:7.5pt;color:#888">${t.loyerTTCsub}</div></div>
-<div style="text-align:end"><div class="hlv">${n0(r.loyerTTC)}</div><div style="font-size:8pt;color:#888">${t.parMois}</div></div></div>
+      html: `<div class="hl" dir="ltr"><div class="lgd"><span class="fr">${T.fr.loyerTTC}</span><i></i><span class="ar" dir="rtl">${T.ar.loyerTTC}</span></div>
+<div class="hlrow" dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><div class="sub">${t.loyerTTCsub}</div><div><div class="hlv">${n0(r.loyerTTC)}</div><div class="hlu">${t.parMois}</div></div></div></div>
 <div class="grid3">${box(t.ht, money(r.loyerHT), 'c-green')}${box(t.tva, money(r.tvaFi), 'c-orange')}${box(t.ttc, money(r.loyerTTC), 'c-blue')}</div>`,
     },
-    { html: `<div class="stitle">${t.vehicule}</div><div class="grid4">${box(t.modele, `<span class="ltr">${esc(veh.model)}</span>`)}${box(t.version, `<span class="ltr">${esc(veh.version)}</span>`)}${box(t.cv, `<span class="ltr">${esc(veh.cv)}</span>`)}${box(t.prix, money(r.achat), 'c-gold')}</div>` },
+    { html: `${st(lang, 'vehicule')}<div class="grid4">${box(t.modele, `<span class="ltr">${esc(veh.model)}</span>`)}${box(t.version, `<span class="ltr">${esc(veh.version)}</span>`)}${box(t.cv, `<span class="ltr">${esc(veh.cv)}</span>`)}${box(t.prix, money(r.achat), 'c-gold')}</div>` },
     {
-      html: `<div class="stitle">${t.conditions}</div><div class="grid3">${box(t.duree, `<span class="num">${r.duree}</span> ${t.mois}`, 'c-blue')}${box(t.kmTotal, `<span class="num">${n0(r.kmTotal)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}${box(t.kmAn, `<span class="num">${n0(kmAn)}</span> ${lang === 'fr' ? 'km/an' : 'كم/سنة'}`)}
+      html: `${st(lang, 'conditions')}<div class="grid3">${box(t.duree, `<span class="num">${r.duree}</span> ${t.mois}`, 'c-blue')}${box(t.kmTotal, `<span class="num">${n0(r.kmTotal)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}${box(t.kmAn, `<span class="num">${n0(kmAn)}</span> ${lang === 'fr' ? 'km/an' : 'كم/سنة'}`)}
 ${box(t.apport, money(r.apport))}${box(t.depot, money(r.depot) + ` <span style="font-weight:400;font-size:7.5pt;color:#777">(${t.depotRest})</span>`, 'c-green')}${box(t.tolerance, `<span class="num">${n0(params.p_km_franchise)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}</div>`,
     },
-    { html: `<div class="stitle s-green">${t.services}</div><div class="svc">${servicesList(params, lang).map(s => `<div>${s}</div>`).join('')}</div>` },
-    { html: `<div class="stitle s-violet">${t.kmSup}</div><div class="grid3">${box(t.kmSup, `<span class="num">${n2(r.kmSup)}</span> ${da}`, 'c-gold')}</div><div class="note">${t.kmSupTxt(n0(params.p_km_franchise), n2(r.kmSup))}</div>` },
+    { html: `${st(lang, 'services')}<div class="svc">${servicesList(params, lang).map(s => `<div>${s}</div>`).join('')}</div>` },
+    { html: `${st(lang, 'kmSup')}<div class="grid3">${box(t.kmSup, `<span class="num">${n2(r.kmSup)}</span> ${da}`, 'c-gold')}</div><div class="note">${t.kmSupTxt(n0(params.p_km_franchise), n2(r.kmSup))}</div>` },
   ];
   if (opt) blocks.push({
-    html: `<div class="stitle s-gold">${t.option}</div><div class="grid4">${box(t.vrBrute, money(r.vrBrute))}${box(t.vrFrais, money(r.vrFrais))}${box(t.vrNette, money(r.vrNette), 'c-green')}${box(t.vrTTC, money(r.vrNetteTTC), 'c-blue')}</div><div class="note">${t.optionTxt}</div>`,
+    html: `${st(lang, 'option')}<div class="grid4">${box(t.vrBrute, money(r.vrBrute))}${box(t.vrFrais, money(r.vrFrais))}${box(t.vrNette, money(r.vrNette), 'c-green')}${box(t.vrTTC, money(r.vrNetteTTC), 'c-blue')}</div><div class="note">${t.optionTxt}</div>`,
   });
   const row = (l: string, ht: number | string, tx: number | string, ttc: number | string, cls = '') =>
     `<tr class="${cls}"><td>${l}</td><td class="r num">${typeof ht === 'number' ? n0(ht) : ht}</td><td class="r num">${typeof tx === 'number' ? n0(tx) : tx}</td><td class="r num">${typeof ttc === 'number' ? n0(ttc) : ttc}</td></tr>`;
   blocks.push({
-    html: `<div class="stitle s-dark">${t.recap}</div><table><tr><th>${t.element}</th><th class="r">HT</th><th class="r">${t.taxes}</th><th class="r">TTC</th></tr>
+    html: `${st(lang, 'recap')}<table><tr><th>${t.element}</th><th class="r">HT</th><th class="r">${t.taxes}</th><th class="r">TTC</th></tr>
 ${row(t.loyerMensuel, r.loyerHT, r.tvaFi, r.loyerTTC)}
 ${row(t.totalLoyers(r.duree), r.loyerHT * r.duree, r.tvaFi * r.duree, r.loyerTTC * r.duree)}
 ${opt ? row(t.optionLigne, r.vrNette, r.vrNette * 0.19, r.vrNetteTTC) : ''}
@@ -314,17 +335,17 @@ export function fleetDocument(lines: FleetLine[], client: string, ref: string, d
 
   // Prestations : celles du premier véhicule (paramètres de services communs à la flotte en pratique)
   const blocks: DocBlock[] = [
-    ...header(lang, ref, date, t.flotte),
-    parties(lang, client),
+    ...header(lang, ref, date, 'flotte'),
+    parties(lang, client, ref, [['nbVeh', `<b class="num">${tot.nb}</b>`]]),
     {
-      html: `<div class="hl"><div><div style="font-size:10.5pt;font-weight:700;color:#0d1e38">${t.totalTTC}</div><div style="font-size:7.5pt;color:#888">${t.nbVeh} : <span class="num">${tot.nb}</span></div></div>
-<div style="text-align:end"><div class="hlv">${n0(tot.ttc)}</div><div style="font-size:8pt;color:#888">${t.parMois}</div></div></div>
+      html: `<div class="hl" dir="ltr"><div class="lgd"><span class="fr">${T.fr.totalTTC}</span><i></i><span class="ar" dir="rtl">${T.ar.totalTTC}</span></div>
+<div class="hlrow" dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><div class="sub">${t.nbVeh} : <b class="num">${tot.nb}</b></div><div><div class="hlv">${n0(tot.ttc)}</div><div class="hlu">${t.parMois}</div></div></div></div>
 <div class="grid3">${box(t.totalHT, tot.ht, 'c-green')}${box(t.totalTVA, tot.tva, 'c-orange')}${box(t.totalTTC, tot.ttc, 'c-blue')}</div>`,
     },
-    { html: `<div class="stitle">${t.lignes}</div><table>${head}${body}${totRow}</table><div class="note">${t.flotteTxt}</div>` },
+    { html: `${st(lang, 'lignes')}<table>${head}${body}${totRow}</table><div class="note">${t.flotteTxt}</div>` },
     { html: `<div class="grid3" style="margin-top:8px">${box(t.totalContrat, tot.contrat)}${box(t.totalDepot, tot.depot, 'c-green')}${box(t.financement, tot.achat, 'c-gold')}</div>` },
   ];
-  if (lines.length) blocks.push({ html: `<div class="stitle s-green">${t.services}</div><div class="svc">${servicesList(lines[0].params, lang).map(s => `<div>${s}</div>`).join('')}</div>` });
+  if (lines.length) blocks.push({ html: `${st(lang, 'services')}<div class="svc">${servicesList(lines[0].params, lang).map(s => `<div>${s}</div>`).join('')}</div>` });
   blocks.push(...clausesAndSignatures(lang, opts.annexeCG));
   if (opts.annexeCG) blocks.push(...annexBlocks(lang));
 
@@ -337,7 +358,7 @@ export function fleetDocument(lines: FleetLine[], client: string, ref: string, d
 
 const safe = (s: string) => s.replace(/[^\w.-]+/g, '_').slice(0, 60) || 'offre';
 
-export const ARABIC_FONT_URL = 'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap';
+export const ARABIC_FONT_URL = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap';
 
 /** Document HTML complet (aperçu, impression, fichier .html). */
 export function documentHTML(doc: OfferDocument): string {
@@ -346,12 +367,11 @@ export function documentHTML(doc: OfferDocument): string {
   return `<!DOCTYPE html><html lang="${doc.lang}" dir="${dir}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(doc.title)}</title>
 <link rel="stylesheet" href="${ARABIC_FONT_URL}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;700&family=JetBrains+Mono:wght@700&display=swap">
 <style>@page{size:A4;margin:14mm 12mm}body{margin:0;background:#fff}.wrap{max-width:186mm;margin:0 auto;padding:10px}
 .blk{break-inside:avoid;page-break-inside:avoid}.brk{break-before:page;page-break-before:always}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{padding:0}}
 ${DOC_CSS}</style></head><body><div class="wrap od" dir="${dir}">${body}
-<div style="margin-top:12px;padding-top:6px;border-top:1px solid #e0e0e0;font-size:6.5pt;color:#999;text-align:center">${T[doc.lang].footer(esc(doc.ref))}</div>
+<div style="margin-top:14px;font-size:6.5pt;color:#777;text-align:center;padding-bottom:4px">${T[doc.lang].footer(esc(doc.ref))}</div><div class="band"></div>
 </div></body></html>`;
 }
 
