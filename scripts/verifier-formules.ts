@@ -7,6 +7,8 @@ import { DEFAULTS, SimulatorParams } from '../src/lib/types';
 import { computeEngine, computePnL } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
 import { validationAlerts, canSubmit, nextRef, Cotation } from '../src/lib/team';
+import { applyChanges, snapshot, sanitizeChanges, paramsFromRequest, kmAnOf } from '../src/lib/assistant';
+import { fleetTotals } from '../src/lib/offerDoc';
 import { marginForRentTTC, marginForRoe, scenarioTable, optionsGrid, adjustedVrPct } from '../src/lib/pricing';
 
 let ok = 0;
@@ -134,6 +136,43 @@ check('Visa : valable seulement pour la version visée', () => {
   assert.equal(canSubmit(c, undefined), false, 'sans visa');
   assert.equal(canSubmit(c, { decision: 'validee', by: 'x', at: '', comment: '', version: 'v1' }), false, 'visa d\'une ancienne version');
   assert.equal(canSubmit(c, { decision: 'validee', by: 'x', at: '', comment: '', version: 'v2' }), true);
+});
+
+
+check('Assistant : un levier change seulement ce qu\'il dit, et la VR suit la durée', () => {
+  const p = applyChanges(DEFAULTS, { duree: 60 });
+  assert.equal(p.p_duree, 60);
+  assert.equal(kmAnOf(p), kmAnOf(DEFAULTS), 'kilométrage annuel conservé');
+  assert.equal(p.p_vr_pct, adjustedVrPct(DEFAULTS, 60, kmAnOf(DEFAULTS)), 'VR ajustée');
+  assert.equal(p.p_target_margin, DEFAULTS.p_target_margin);
+  const q = applyChanges(DEFAULTS, { marge: 4 });
+  assert.equal(q.p_vr_pct, DEFAULTS.p_vr_pct); assert.equal(q.p_duree, DEFAULTS.p_duree);
+  assert.ok(snapshot(q).loyerTTC < snapshot(DEFAULTS).loyerTTC, 'marge plus basse, loyer plus bas');
+  assert.ok(snapshot(applyChanges(DEFAULTS, { sans_remplacement: true })).loyerTTC < snapshot(DEFAULTS).loyerTTC);
+});
+
+check('Assistant : les valeurs renvoyées par Claude sont filtrées', () => {
+  assert.deepEqual(sanitizeChanges({ duree: '60', marge: 'abc', sans_assistance: 'oui', inconnu: 3 }), { duree: 60 });
+  const p = applyChanges(DEFAULTS, { duree: 500, marge: 99, apport: -10 });
+  assert.equal(p.p_duree, 84); assert.equal(p.p_target_margin, 20); assert.equal(p.p_apport, 0);
+});
+
+check('Assistant : pré-remplissage depuis une demande client', () => {
+  const p = paramsFromRequest(DEFAULTS, { client: 'SARL Test', vehicule_index: 5, duree_mois: 36, km_total: 90000, apport: null });
+  assert.equal(p.clientName, 'SARL Test');
+  assert.equal(p.veh_idx, 5); assert.equal(p.p_achat, 4049000);
+  assert.equal(p.p_duree, 36); assert.equal(p.p_km, 90000);
+  assert.equal(p.p_apport, DEFAULTS.p_apport);
+  const z = paramsFromRequest(DEFAULTS, { vehicule_index: 99 });
+  assert.equal(z.veh_idx, DEFAULTS.veh_idx, 'index hors catalogue ignoré');
+});
+
+check('Devis flotte : totaux = somme des lignes × quantités', () => {
+  const t = fleetTotals([{ id: 'a', qty: 3, params: DEFAULTS }, { id: 'b', qty: 2, params: { ...DEFAULTS, p_duree: 36, p_km: 90000 } }]);
+  const a = computeEngine(DEFAULTS), b = computeEngine({ ...DEFAULTS, p_duree: 36, p_km: 90000 });
+  assert.equal(t.nb, 5);
+  near(t.ttc, 3 * a.loyerTTC + 2 * b.loyerTTC, 0.01);
+  near(t.contrat, 3 * a.loyerTTC * 48 + 2 * b.loyerTTC * 36, 0.1);
 });
 
 await (async () => {
