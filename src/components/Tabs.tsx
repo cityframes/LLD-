@@ -5,6 +5,7 @@ import { PnLTab } from './PnLTab';
 import { AmortizationTab } from './AmortizationTab';
 import { CotationsTab } from './CotationsTab';
 import { DashboardTab } from './DashboardTab';
+import { FleetTab } from './FleetTab';
 import { useTeam } from '../Team';
 import { cn } from '../lib/utils';
 
@@ -20,6 +21,7 @@ export function Tabs() {
         <TabButton active={activeTab === 'smr'} onClick={() => setActiveTab('smr')}>🔧 Plan SMR 10 000 KM</TabButton>
         <TabButton active={activeTab === 'pnl'} onClick={() => setActiveTab('pnl')}>📊 Rentabilité Banque & P&L</TabButton>
         <TabButton active={activeTab === 'amort'} onClick={() => setActiveTab('amort')}>📋 Tableau d'Amortissement</TabButton>
+        <TabButton active={activeTab === 'fleet'} onClick={() => setActiveTab('fleet')}>🚐 Devis flotte</TabButton>
         <TabButton active={activeTab === 'cot'} onClick={() => setActiveTab('cot')}>📁 Cotations{aValider > 0 && <span className="ml-1 px-1.5 rounded-full bg-[#e0a04a] text-[#0d1e38] text-[9px]">{aValider}</span>}</TabButton>
         <TabButton active={activeTab === 'dash'} onClick={() => setActiveTab('dash')}>📈 Tableau de bord</TabButton>
       </div>
@@ -36,6 +38,7 @@ export function Tabs() {
       <div className={cn("hidden", activeTab === 'amort' && "block")}>
         <AmortizationTab />
       </div>
+      {activeTab === 'fleet' && <FleetTab onOpen={() => setActiveTab('sim')} />}
       {activeTab === 'cot' && <CotationsTab onOpen={() => setActiveTab('sim')} />}
       {activeTab === 'dash' && <DashboardTab />}
     </>
