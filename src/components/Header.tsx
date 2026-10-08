@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { useStateContext } from '../Store';
-import { DEFAULTS } from '../lib/types';
-import { buildOfferHTML } from '../lib/pdfExport';
+import { CATALOG } from '../lib/types';
+import { offerDocument, DocOptions, Lang } from '../lib/offerDoc';
+import { saveFile } from '../lib/deliver';
+import { OfferDialog } from './OfferDialog';
 import * as XLSX from 'xlsx';
+
+const n0 = (v: number) => Math.round(v).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ');
 
 export function Header() {
   const { dispatch, isCorporate, setIsCorporate, engineResult, pnlResult, params } = useStateContext();
+  const [offer, setOffer] = useState(false);
+  const [xlsMsg, setXlsMsg] = useState('');
+
+  const buildOffer = useCallback((o: DocOptions) => offerDocument(engineResult, params, o), [engineResult, params]);
+  const offerEmail = useCallback((lang: Lang) => {
+    const ref = params.clientRef || '';
+    const v = params.veh_idx >= 0 && CATALOG[params.veh_idx] ? `${CATALOG[params.veh_idx].model} ${CATALOG[params.veh_idx].version}` : '';
+    return lang === 'fr' ? {
+      subject: `Offre de location Ijara ${ref} · Al Salam Bank`,
+      body: `Madame, Monsieur,\n\nVeuillez trouver ci-joint notre offre de location Ijara ${ref}${v ? ` pour un véhicule ${v}` : ''} : loyer mensuel de ${n0(engineResult.loyerTTC)} DA TTC sur ${engineResult.duree} mois, entretien, Takaful et taxes compris.\n\nL'offre est valable 15 jours. Nous restons à votre disposition pour tout complément d'information.\n\nCordialement,\nDépartement Location longue durée\nAl Salam Bank`,
+    } : {
+      subject: `عرض إيجار ${ref} · بنك السلام الجزائر`,
+      body: `السيدات والسادة،\n\nيسعدنا أن نرسل إليكم مرفقاً عرض الإيجار ${ref}${v ? ` الخاص بمركبة ${v}` : ''}: بدل إيجار شهري قدره ${n0(engineResult.loyerTTC)} دج متضمن الرسوم لمدة ${engineResult.duree} شهراً، يشمل الصيانة والتكافل والرسوم.\n\nالعرض صالح لمدة 15 يوماً، ونبقى في خدمتكم لأي استفسار.\n\nمع خالص التحيات،\nمديرية الإيجار طويل الأجل\nبنك السلام الجزائر`,
+    };
+  }, [params, engineResult]);
 
   const handleReset = () => {
     if (confirm('Remettre tous les paramètres aux valeurs par défaut ?')) {
@@ -13,25 +32,7 @@ export function Header() {
     }
   };
 
-  const handleExportPDF = () => {
-    const html = buildOfferHTML(engineResult, params);
-    const printWin = window.open('', '_blank', 'width=900,height=750');
-    if (!printWin) { alert('Veuillez autoriser les fenêtres popup pour générer le PDF.'); return; }
-    printWin.document.open();
-    printWin.document.write(html);
-    printWin.document.close();
-    printWin.onload = function() {
-      setTimeout(function() {
-        printWin.focus();
-        printWin.print();
-      }, 400);
-    };
-    setTimeout(function() {
-      try { printWin.focus(); printWin.print(); } catch (e) { }
-    }, 1200);
-  };
-
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const inputs = [
       ['Paramètre', 'Valeur'],
       ['Profil pricing', params.v11_profile],
@@ -79,7 +80,9 @@ export function Header() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(inputs), 'Synthèse');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pnl), 'P&L');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(amort), 'Amortissement');
-    XLSX.writeFile(wb, 'LLD_Ijarah_v11_' + (params.clientRef || 'simulation') + '.xlsx');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+    const r = await saveFile('LLD_Ijara_' + (params.clientRef || 'simulation') + '.xlsx', new Blob([buf]));
+    setXlsMsg(r.status === 'error' ? (r.message || 'Export Excel impossible.') : '');
   };
 
   return (
@@ -127,10 +130,12 @@ export function Header() {
         <button onClick={handleExportExcel} className="border-none bg-[var(--color-blue)] text-white px-4 py-2 rounded-md font-bold text-[11px] cursor-pointer flex items-center gap-1.5 transition-opacity hover:opacity-85">
           📊 Excel
         </button>
-        <button onClick={handleExportPDF} className="border-none bg-[var(--color-gold)] text-[#0d1e38] px-4 py-2 rounded-md font-bold text-[11px] cursor-pointer flex items-center gap-1.5 transition-opacity hover:opacity-85">
-          📄 Exporter PDF
+        <button onClick={() => setOffer(true)} className="border-none bg-[var(--color-gold)] text-[#0d1e38] px-4 py-2 rounded-md font-bold text-[11px] cursor-pointer flex items-center gap-1.5 transition-opacity hover:opacity-85">
+          📄 Offre client
         </button>
+        {xlsMsg && <span className="text-[10px] text-[#e8aa60]">{xlsMsg}</span>}
       </div>
+      {offer && <OfferDialog build={buildOffer} email={offerEmail} onClose={() => setOffer(false)} />}
     </div>
   );
 }
