@@ -3,6 +3,7 @@ import { useStateContext } from '../Store';
 import { CATALOG } from '../lib/types';
 import { offerDocument, DocOptions, Lang } from '../lib/offerDoc';
 import { saveFile } from '../lib/deliver';
+import { LOGO_DATA_URI } from '../lib/logo';
 import { OfferDialog } from './OfferDialog';
 import * as XLSX from 'xlsx';
 
@@ -88,8 +89,8 @@ export function Header() {
   return (
     <div className="flex justify-between items-center flex-wrap gap-2.5 p-4 md:px-6 mb-3.5 rounded-xl bg-gradient-to-br from-[#0d1e38] to-[#091525] border border-[var(--color-border-main)] shadow-lg">
       <div className="flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center font-cormorant text-xl font-bold text-[#080f1a] bg-gradient-to-br from-[var(--color-gold)] to-[#9a6c1a]">
-          ﺍ
+        <div className="h-11 px-2 rounded-lg bg-white flex items-center shrink-0">
+          <img src={LOGO_DATA_URI} alt="Al Salam Bank" className="h-9 w-auto block" />
         </div>
         <div>
           <div className="font-cormorant text-[21px] font-bold text-[var(--color-gold-l)] leading-tight">

@@ -7,6 +7,7 @@
  */
 import { SimulatorParams, CATALOG } from "./types";
 import { computeEngine } from "./engine";
+import { LOGO_DATA_URI } from "./logo";
 
 export type Lang = 'fr' | 'ar';
 export interface DocOptions { lang: Lang }
@@ -127,10 +128,8 @@ export const DOC_CSS = `
 .od .ttl .t1{font-size:16pt;font-weight:700}
 .od .ttl .t2{font-size:13pt;font-weight:700}
 .od .edit{display:flex;gap:14px;font-size:8.5pt;margin-top:6px;align-items:baseline}
-.od .wm{text-align:end;line-height:1.15}
-.od .wm .w1{font-family:'Noto Sans Arabic',Arial,sans-serif;font-size:15pt;font-weight:700;color:#071530}
-.od .wm .w2{font-size:15pt;font-weight:700;color:#071530;font-family:Arial,sans-serif;direction:ltr}
-.od .wm .w3{display:inline-block;width:46px;height:3px;background:#F2643B;border-radius:2px;margin-top:5px}
+.od .wm{flex:none}
+.od .wm img{display:block;height:52px;width:auto}
 .od .top{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;align-items:start;margin-bottom:6px}
 .od .fset{position:relative;border:2px solid #F2643B;border-radius:14px;padding:16px 16px 10px;margin-top:8px}
 .od .lgd{position:absolute;top:-9px;left:18px;right:18px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:8.5pt}
@@ -200,7 +199,7 @@ function header(lang: Lang, ref: string, date: string, titre: Key): DocBlock[] {
   return [{
     html: `<div class="hd"><div><div class="ttl"><span class="t1">${T[lang][titre] as string}</span>${alt(lang, titre).replace('class="alt', 'class="t2')}</div>
 <div class="edit"><span class="fr"><b>${T.fr.edite}</b> :</span><span class="num">${esc(date)}</span><span class="ar" dir="rtl"><b>${T.ar.edite}</b></span></div></div>
-<div class="wm"><div class="w1">بنك السلام</div><div class="w2">Al Salam Bank</div><div class="w3"></div></div></div>`,
+<div class="wm"><img src="${LOGO_DATA_URI}" alt="Al Salam Bank"></div></div>`,
   }];
 }
 
