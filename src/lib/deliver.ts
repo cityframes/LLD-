@@ -45,8 +45,7 @@ function ensureFont() {
 const PAGE_W = 794, PAGE_H = 1123, PAD_X = 42, PAD_TOP = 40, PAD_BOTTOM = 56;
 
 /**
- * Met le document en pages A4 (blocs insécables, saut de page avant
- * l'annexe) puis photographie chaque page dans un PDF.
+ * Met le document en pages A4 (blocs insécables) puis photographie chaque page dans un PDF.
  */
 export async function renderPDF(doc: OfferDocument, onProgress?: (done: number, total: number) => void): Promise<Blob> {
   ensureFont();
@@ -64,7 +63,7 @@ export async function renderPDF(doc: OfferDocument, onProgress?: (done: number, 
   try {
     await document.fonts.ready;
     // Laisse la police arabe arriver si elle se charge encore
-    if (doc.lang === 'ar' || doc.blocks.some(b => b.html.includes('class="cg"'))) {
+    if (doc.lang === 'ar') {
       try { await Promise.race([document.fonts.load("10pt 'Noto Sans Arabic'"), new Promise(r => setTimeout(r, 2500))]); } catch { /* police système */ }
     }
 

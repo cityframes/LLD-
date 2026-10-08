@@ -1,17 +1,15 @@
 /**
  * Documents remis au client : offre Ijara (un véhicule) et devis flotte,
- * en français ou en arabe, avec en annexe les conditions générales de
- * l'Ijara opérationnelle.
+ * en français ou en arabe.
  *
  * Un document est une suite de blocs HTML insécables : le même modèle sert à
  * l'aperçu, à l'impression et au PDF (mis en page A4 bloc par bloc).
  */
 import { SimulatorParams, CATALOG } from "./types";
 import { computeEngine } from "./engine";
-import { CG_IJARA, CG_TITRE } from "./cgIjara";
 
 export type Lang = 'fr' | 'ar';
-export interface DocOptions { lang: Lang; annexeCG: boolean }
+export interface DocOptions { lang: Lang }
 export interface DocBlock { html: string; breakBefore?: boolean }
 export interface OfferDocument {
   title: string;
@@ -38,26 +36,26 @@ const T = {
     nom: 'Raison sociale', adresse: 'Adresse', rc: 'RC / NIF', represente: 'Représenté par',
     loyerTTC: 'Loyer mensuel tout compris (TTC)', loyerTTCsub: 'Ijara, entretien, Takaful, taxes',
     ht: 'Loyer mensuel HT', tva: 'TVA mensuelle (19 %)', ttc: 'Loyer mensuel TTC', parMois: 'DA / mois',
-    vehicule: 'Véhicule loué', modele: 'Modèle', version: 'Version', cv: 'Puissance fiscale', prix: 'Prix d\'acquisition HT',
+    vehicule: 'Véhicule loué', modele: 'Modèle', version: 'Version', cv: 'Puissance fiscale', prix: 'Prix d\'acquisition HT', prixTVA: 'TVA sur le prix (19 %)', prixTTC: 'Prix d\'acquisition TTC',
     conditions: 'Conditions du contrat', duree: 'Durée', mois: 'mois', kmTotal: 'Kilométrage total', kmAn: 'Kilométrage annuel',
     apport: 'Apport initial', tolerance: 'Tolérance kilométrique', depot: 'Hamish Jiddiyyah (dépôt de garantie)', depotRest: 'restitué en fin de contrat',
     services: 'Prestations incluses dans le loyer',
-    kmSup: 'Kilomètre supplémentaire', kmSupTxt: (f: string, p: string) => `Au-delà du kilométrage contractuel (tolérance ${f} km), chaque kilomètre est facturé ${p} DA HT (article 7.3 des conditions générales).`,
+    kmSup: 'Kilomètre supplémentaire', kmHT: 'Prix du km HT', kmTVA: 'TVA (19 %)', kmTTC: 'Prix du km TTC', kmSupTxt: (f: string, p: string, t: string) => `Au-delà du kilométrage contractuel (tolérance ${f} km), chaque kilomètre est facturé ${p} DA HT, soit ${t} DA TTC.`,
     option: 'Option d\'achat en fin de contrat', vrBrute: 'Valeur résiduelle HT', vrFrais: 'Frais de remise en état HT', vrNette: 'Prix de cession HT', vrTTC: 'Prix de cession TTC',
     optionTxt: 'La TVA de 19 % s\'applique au moment de la levée d\'option. Le preneur reste libre de racheter le véhicule ou de le restituer.',
     recap: 'Récapitulatif financier', element: 'Élément', taxes: 'TVA', loyerMensuel: 'Loyer mensuel', totalLoyers: (d: number) => `Total des loyers (${d} mois)`,
     optionLigne: 'Option d\'achat', coutTotal: 'Coût total de l\'opération', recapNote: 'Coût total = loyers TTC, plus le prix de cession si l\'option est levée ; le Hamish Jiddiyyah est restitué. Montants en dinars algériens.',
     clauses: 'Conditions de l\'offre',
-    clausesTxt: (annexe: boolean) => `La présente offre constitue l'« offre de location » (conditions particulières) au sens des conditions générales de l'Ijara opérationnelle${annexe ? ', jointes en annexe' : ''}, qui en font partie intégrante. Elle ne devient un contrat qu'après acceptation du dossier du preneur par Al Salam Bank. Le véhicule reste la propriété exclusive de la banque pendant toute la durée de la location ; le preneur en a l'usage sans droit de propriété. Toute modification des conditions tarifaires requiert l'accord écrit des deux parties. Offre valable 15 jours à compter de sa date d'émission.`,
+    clausesTxt: `La présente offre constitue une offre de location Ijara opérationnelle. Elle ne devient un contrat qu'après acceptation du dossier du preneur par Al Salam Bank. Le véhicule reste la propriété exclusive de la banque pendant toute la durée de la location ; le preneur en a l'usage sans droit de propriété. Toute modification des conditions tarifaires requiert l'accord écrit des deux parties. Offre valable 15 jours à compter de sa date d'émission.`,
     signClient: 'Pour le preneur', signBanque: 'Pour Al Salam Bank',
-    signClientTxt: 'Lu et approuvé : je reconnais avoir pris connaissance de la présente offre et des conditions générales, et j\'en accepte les termes.',
+    signClientTxt: 'Lu et approuvé : je reconnais avoir pris connaissance de la présente offre et j\'en accepte les termes.',
     signBanqueTxt: 'Sous réserve de l\'acceptation du dossier et de la réalisation des conditions suspensives.',
     signLigne: 'Nom, qualité et signature', signDate: 'Date', cachet: 'Cachet',
     footer: (ref: string) => `Al Salam Bank · Banque participative · Offre ${ref} · Montants en dinars algériens (DA) · Document non contractuel avant signature des deux parties`,
     annexe: 'Annexe : conditions générales de l\'Ijara opérationnelle', annexeNote: 'Texte de référence en langue arabe.',
     lignes: 'Détail de la flotte', qte: 'Qté', unitHT: 'Loyer HT unitaire', unitTTC: 'Loyer TTC unitaire', totalMois: 'Total TTC / mois', vrUnit: 'Prix de cession HT unitaire',
     totalFlotte: 'Total flotte', nbVeh: 'Véhicules', totalHT: 'Loyers HT / mois', totalTVA: 'TVA / mois', totalTTC: 'Loyers TTC / mois', totalContrat: 'Total des loyers TTC sur les contrats', totalDepot: 'Hamish Jiddiyyah total', financement: 'Valeur d\'acquisition HT totale',
-    flotteTxt: 'Chaque véhicule fait l\'objet d\'un contrat de location distinct, régi par les conditions générales (article 1).',
+    flotteTxt: 'Chaque véhicule fait l\'objet d\'un contrat de location distinct.',
     manuel: 'Saisie manuelle',
   },
   ar: {
@@ -70,26 +68,26 @@ const T = {
     nom: 'الاسم / التسمية الاجتماعية', adresse: 'العنوان', rc: 'السجل التجاري / NIF', represente: 'ممثَّل من طرف',
     loyerTTC: 'بدل الإيجار الشهري الشامل (متضمن الرسوم)', loyerTTCsub: 'الإجارة، الصيانة، التكافل، الرسوم',
     ht: 'بدل الإيجار الشهري دون رسوم', tva: 'الرسم على القيمة المضافة (19 %)', ttc: 'بدل الإيجار الشهري متضمن الرسوم', parMois: 'دج / شهرياً',
-    vehicule: 'المركبة المؤجَّرة', modele: 'الطراز', version: 'النسخة', cv: 'القوة الجبائية', prix: 'سعر الاقتناء دون رسوم',
+    vehicule: 'المركبة المؤجَّرة', modele: 'الطراز', version: 'النسخة', cv: 'القوة الجبائية', prix: 'سعر الاقتناء دون رسوم', prixTVA: 'الرسم على القيمة المضافة على السعر (19 %)', prixTTC: 'سعر الاقتناء متضمن الرسوم',
     conditions: 'شروط العقد', duree: 'المدة', mois: 'شهراً', kmTotal: 'المسافة الإجمالية', kmAn: 'المسافة السنوية',
     apport: 'الدفعة الأولى', tolerance: 'هامش المسافة المسموح به', depot: 'هامش الجدية (مبلغ الضمان)', depotRest: 'يُرَدّ عند نهاية العقد',
     services: 'الخدمات المشمولة في بدل الإيجار',
-    kmSup: 'الكيلومتر الإضافي', kmSupTxt: (f: string, p: string) => `بعد تجاوز المسافة المتعاقد عليها (مع هامش ${f} كم)، يُفوتَر كل كيلومتر إضافي بمبلغ ${p} دج دون رسوم (المادة 7.3 من الشروط العامة).`,
+    kmSup: 'الكيلومتر الإضافي', kmHT: 'سعر الكيلومتر دون رسوم', kmTVA: 'الرسم على القيمة المضافة (19 %)', kmTTC: 'سعر الكيلومتر متضمن الرسوم', kmSupTxt: (f: string, p: string, t: string) => `بعد تجاوز المسافة المتعاقد عليها (مع هامش ${f} كم)، يُفوتَر كل كيلومتر إضافي بمبلغ ${p} دج دون رسوم، أي ${t} دج متضمن الرسوم.`,
     option: 'خيار الشراء عند نهاية العقد', vrBrute: 'القيمة المتبقية دون رسوم', vrFrais: 'تكاليف إعادة التهيئة دون رسوم', vrNette: 'سعر التنازل دون رسوم', vrTTC: 'سعر التنازل متضمن الرسوم',
     optionTxt: 'يُطبَّق الرسم على القيمة المضافة (19 %) عند ممارسة خيار الشراء. ويبقى للمستأجر حرية شراء المركبة أو إعادتها.',
     recap: 'الملخص المالي', element: 'البيان', taxes: 'الرسم', loyerMensuel: 'بدل الإيجار الشهري', totalLoyers: (d: number) => `مجموع بدلات الإيجار (${d} شهراً)`,
     optionLigne: 'خيار الشراء', coutTotal: 'التكلفة الإجمالية للعملية', recapNote: 'التكلفة الإجمالية = بدلات الإيجار متضمنة الرسوم، مضافاً إليها سعر التنازل عند ممارسة الخيار؛ ويُرَدّ هامش الجدية. المبالغ بالدينار الجزائري.',
     clauses: 'شروط العرض',
-    clausesTxt: (annexe: boolean) => `يُعتبر هذا العرض «عرض الإيجار» (الشروط الخاصة) بمفهوم الشروط العامة للإجارة التشغيلية${annexe ? ' المرفقة به' : ''}، والتي تُشكّل جزءاً لا يتجزأ منه. ولا يصبح عقداً نافذاً إلا بعد قبول ملف المستأجر من طرف بنك السلام الجزائر. وتبقى المركبة ملكية خالصة للمؤجِّر طوال مدة الإيجار، وللمستأجر حق استعمالها دون أي حق ملكية. ولا يُعدَّل أي شرط من الشروط المالية إلا باتفاق كتابي بين الطرفين. العرض صالح لمدة 15 يوماً من تاريخ إصداره.`,
+    clausesTxt: `يُعتبر هذا العرض عرضاً للإيجار في إطار الإجارة التشغيلية. ولا يصبح عقداً نافذاً إلا بعد قبول ملف المستأجر من طرف بنك السلام الجزائر. وتبقى المركبة ملكية خالصة للمؤجِّر طوال مدة الإيجار، وللمستأجر حق استعمالها دون أي حق ملكية. ولا يُعدَّل أي شرط من الشروط المالية إلا باتفاق كتابي بين الطرفين. العرض صالح لمدة 15 يوماً من تاريخ إصداره.`,
     signClient: 'عن المستأجر', signBanque: 'عن بنك السلام الجزائر',
-    signClientTxt: 'قرأت ووافقت: أُقرّ بأنني اطّلعت على هذا العرض وعلى الشروط العامة، وأقبل بنودها.',
+    signClientTxt: 'قرأت ووافقت: أُقرّ بأنني اطّلعت على هذا العرض ، وأقبل بنودها.',
     signBanqueTxt: 'مع مراعاة قبول الملف وتحقق الشروط الواقفة.',
     signLigne: 'الاسم والصفة والتوقيع', signDate: 'التاريخ', cachet: 'الختم',
     footer: (ref: string) => `بنك السلام الجزائر · بنك تشاركي · العرض ${ref} · المبالغ بالدينار الجزائري (دج) · وثيقة غير ملزمة قبل توقيع الطرفين`,
     annexe: 'ملحق: الشروط العامة للإجارة التشغيلية', annexeNote: '',
     lignes: 'تفاصيل الأسطول', qte: 'العدد', unitHT: 'البدل الشهري للوحدة دون رسوم', unitTTC: 'البدل الشهري للوحدة متضمن الرسوم', totalMois: 'المجموع الشهري متضمن الرسوم', vrUnit: 'سعر التنازل للوحدة دون رسوم',
     totalFlotte: 'مجموع الأسطول', nbVeh: 'عدد المركبات', totalHT: 'البدلات الشهرية دون رسوم', totalTVA: 'الرسم الشهري', totalTTC: 'البدلات الشهرية متضمنة الرسوم', totalContrat: 'مجموع البدلات متضمنة الرسوم طوال العقود', totalDepot: 'مجموع هامش الجدية', financement: 'مجموع قيمة الاقتناء دون رسوم',
-    flotteTxt: 'تكون كل مركبة موضوع عقد إيجار مستقل، يخضع للشروط العامة (المادة 1).',
+    flotteTxt: 'تكون كل مركبة موضوع عقد إيجار مستقل.',
     manuel: 'إدخال يدوي',
   },
 };
@@ -99,13 +97,13 @@ const DA = { fr: 'DA', ar: 'دج' };
 /** Prestations réellement comprises dans le loyer, d'après les paramètres. */
 function servicesList(p: SimulatorParams, lang: Lang): string[] {
   const fr = lang === 'fr';
-  const s: string[] = [fr ? 'Plan d\'entretien constructeur (révisions tous les 10 000 km, réseau TALHA AUTO)' : 'برنامج الصيانة الدورية للمصنِّع (كل 10 000 كم، شبكة TALHA AUTO)'];
+  const s: string[] = [fr ? 'Plan d\'entretien constructeur' : 'برنامج الصيانة الدورية للمصنِّع'];
   if (p.c_pneu > 0) s.push(fr ? 'Remplacement des pneumatiques selon l\'usure' : 'استبدال الإطارات حسب الاهتراء');
   s.push(fr ? 'Takaful dommages et responsabilité civile' : 'التكافل ضد الأضرار والمسؤولية المدنية');
   if (p.p_vignette > 0) s.push(fr ? 'Vignette automobile' : 'قسيمة السيارات');
   if (p.c_ct > 0) s.push(fr ? 'Contrôle technique périodique' : 'الفحص التقني الدوري');
   if (p.c_assistance > 0) s.push(fr ? 'Assistance et remorquage 24 h/24' : 'المساعدة وسحب المركبة على مدار الساعة');
-  if (p.c_veh_d > 0 && p.c_veh_j > 0) s.push(fr ? `Véhicule de remplacement (jusqu'à ${p.c_veh_j} jours par an)` : `سيارة بديلة (حتى ${p.c_veh_j} يوماً في السنة)`);
+  if (p.c_veh_d > 0 && p.c_veh_j > 0) s.push(fr ? 'Véhicule de remplacement' : 'سيارة بديلة');
   if (p.c_mob > 0) s.push(fr ? 'Mobilité et télématique' : 'خدمات التنقل والتتبع');
   if (p.c_gestion > 0) s.push(fr ? 'Gestion de flotte' : 'تسيير الأسطول');
   return s;
@@ -181,14 +179,6 @@ export const DOC_CSS = `
 .od .sign{position:relative;border:2px solid #F2643B;border-radius:14px;padding:16px 14px 10px;min-height:124px}
 .od .signs .sub{font-size:7.6pt;color:#444;line-height:1.4}
 .od .sline{border-bottom:1px solid #999;margin-top:30px;margin-bottom:4px}
-.od .ann-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13pt;font-weight:700;padding-bottom:5px;border-bottom:3px double #c0c0c0;margin-bottom:4px}
-.od .ann-n{font-size:8pt;color:#555;margin:4px 0 8px}
-.od .cg{direction:rtl;text-align:justify;font-family:'Noto Sans Arabic',Arial,'Segoe UI',Tahoma,sans-serif;font-size:8.4pt;line-height:1.65;color:#111}
-.od .cg-h{font-size:10pt;font-weight:700;color:#000;margin-top:10px;margin-bottom:3px;padding-inline-start:8px;border-inline-start:4px solid #F2643B}
-.od .cg-s{font-weight:700;color:#071530;margin-top:5px}
-.od .cg-li{padding-inline-start:14px;position:relative}
-.od .cg-li::before{content:'•';position:absolute;inset-inline-start:3px;color:#F2643B}
-.od .cg-p{margin:2px 0}
 .od .band{height:9px;background:#071530}
 `;
 
@@ -225,26 +215,13 @@ function parties(lang: Lang, client: string, ref: string, extra: [Key, string][]
   };
 }
 
-function clausesAndSignatures(lang: Lang, annexe: boolean): DocBlock[] {
+function clausesAndSignatures(lang: Lang): DocBlock[] {
   const t = T[lang];
   const sign = (k: Key, sub: string) => `<div class="sign" dir="ltr"><div class="lgd"><span class="fr">${T.fr[k] as string}</span><i></i><span class="ar" dir="rtl">${T.ar[k] as string}</span></div><div class="sub" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">${sub}</div><div class="sline"></div><div class="lbl" dir="${lang === 'ar' ? 'rtl' : 'ltr'}">${t.signLigne}</div><div class="lbl" dir="${lang === 'ar' ? 'rtl' : 'ltr'}" style="margin-top:6px">${t.signDate} : ____ / ____ / ________ &nbsp; ${t.cachet} :</div></div>`;
   return [
-    { html: `${st(lang, 'clauses')}<div class="clauses">${t.clausesTxt(annexe)}</div>` },
+    { html: `${st(lang, 'clauses')}<div class="clauses">${t.clausesTxt}</div>` },
     { html: `<div class="signs">${sign('signClient', t.signClientTxt)}${sign('signBanque', t.signBanqueTxt)}</div>` },
   ];
-}
-
-function annexBlocks(lang: Lang): DocBlock[] {
-  const t = T[lang];
-  const out: DocBlock[] = [{
-    breakBefore: true,
-    html: `<div class="ann-h"><span>${t.annexe}</span>${alt(lang, 'annexe')}</div>${t.annexeNote ? `<div class="ann-n">${t.annexeNote}</div>` : ''}<div class="cg"><div style="text-align:center;font-size:12pt;font-weight:700;margin:4px 0 6px">${CG_TITRE}</div></div>`,
-  }];
-  for (const [k, txt] of CG_IJARA) {
-    const cls = k === 'h' ? 'cg-h' : k === 's' ? 'cg-s' : k === 'li' ? 'cg-li' : 'cg-p';
-    out.push({ html: `<div class="cg"><div class="${cls}">${esc(txt)}</div></div>` });
-  }
-  return out;
 }
 
 /* ------------------------------------------------------------ documents */
@@ -257,7 +234,6 @@ export function offerDocument(r: Engine, params: SimulatorParams, opts: DocOptio
   const date = params.clientDate || new Date().toLocaleDateString('fr-FR');
   const veh = vehicleOf(params, lang);
   const kmAn = Math.round(r.kmTotal / r.duree * 12);
-  const opt = params.optRevente;
   const box = (l: string, v: string, c = '') => `<div class="box"><div class="lbl">${l}</div><div class="val ${c}">${v}</div></div>`;
   const money = (v: number, c = '') => `<span class="num ${c}">${n0(v)}</span> ${da}`;
 
@@ -269,29 +245,15 @@ export function offerDocument(r: Engine, params: SimulatorParams, opts: DocOptio
 <div class="hlrow" dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><div class="sub">${t.loyerTTCsub}</div><div><div class="hlv">${n0(r.loyerTTC)}</div><div class="hlu">${t.parMois}</div></div></div></div>
 <div class="grid3">${box(t.ht, money(r.loyerHT), 'c-green')}${box(t.tva, money(r.tvaFi), 'c-orange')}${box(t.ttc, money(r.loyerTTC), 'c-blue')}</div>`,
     },
-    { html: `${st(lang, 'vehicule')}<div class="grid4">${box(t.modele, `<span class="ltr">${esc(veh.model)}</span>`)}${box(t.version, `<span class="ltr">${esc(veh.version)}</span>`)}${box(t.cv, `<span class="ltr">${esc(veh.cv)}</span>`)}${box(t.prix, money(r.achat), 'c-gold')}</div>` },
+    { html: `${st(lang, 'vehicule')}<div class="grid4">${box(t.modele, `<span class="ltr">${esc(veh.model)}</span>`)}${box(t.version, `<span class="ltr">${esc(veh.version)}</span>`)}${box(t.cv, `<span class="ltr">${esc(veh.cv)}</span>`)}</div><div class="grid3" style="margin-top:8px">${box(t.prix, money(r.achat), 'c-green')}${box(t.prixTVA, money(r.achat * 0.19), 'c-orange')}${box(t.prixTTC, money(r.achat * 1.19), 'c-blue')}</div>` },
     {
       html: `${st(lang, 'conditions')}<div class="grid3">${box(t.duree, `<span class="num">${r.duree}</span> ${t.mois}`, 'c-blue')}${box(t.kmTotal, `<span class="num">${n0(r.kmTotal)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}${box(t.kmAn, `<span class="num">${n0(kmAn)}</span> ${lang === 'fr' ? 'km/an' : 'كم/سنة'}`)}
 ${box(t.apport, money(r.apport))}${box(t.depot, money(r.depot) + ` <span style="font-weight:400;font-size:7.5pt;color:#777">(${t.depotRest})</span>`, 'c-green')}${box(t.tolerance, `<span class="num">${n0(params.p_km_franchise)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}</div>`,
     },
     { html: `${st(lang, 'services')}<div class="svc">${servicesList(params, lang).map(s => `<div>${s}</div>`).join('')}</div>` },
-    { html: `${st(lang, 'kmSup')}<div class="grid3">${box(t.kmSup, `<span class="num">${n2(r.kmSup)}</span> ${da}`, 'c-gold')}</div><div class="note">${t.kmSupTxt(n0(params.p_km_franchise), n2(r.kmSup))}</div>` },
+    { html: `${st(lang, 'kmSup')}<div class="grid3">${box(t.kmHT, `<span class="num">${n2(r.kmSup)}</span> ${da}`, 'c-green')}${box(t.kmTVA, `<span class="num">${n2(r.kmSup * 0.19)}</span> ${da}`, 'c-orange')}${box(t.kmTTC, `<span class="num">${n2(r.kmSup * 1.19)}</span> ${da}`, 'c-blue')}</div><div class="note">${t.kmSupTxt(n0(params.p_km_franchise), n2(r.kmSup), n2(r.kmSup * 1.19))}</div>` },
   ];
-  if (opt) blocks.push({
-    html: `${st(lang, 'option')}<div class="grid4">${box(t.vrBrute, money(r.vrBrute))}${box(t.vrFrais, money(r.vrFrais))}${box(t.vrNette, money(r.vrNette), 'c-green')}${box(t.vrTTC, money(r.vrNetteTTC), 'c-blue')}</div><div class="note">${t.optionTxt}</div>`,
-  });
-  const row = (l: string, ht: number | string, tx: number | string, ttc: number | string, cls = '') =>
-    `<tr class="${cls}"><td>${l}</td><td class="r num">${typeof ht === 'number' ? n0(ht) : ht}</td><td class="r num">${typeof tx === 'number' ? n0(tx) : tx}</td><td class="r num">${typeof ttc === 'number' ? n0(ttc) : ttc}</td></tr>`;
-  blocks.push({
-    html: `${st(lang, 'recap')}<table><tr><th>${t.element}</th><th class="r">HT</th><th class="r">${t.taxes}</th><th class="r">TTC</th></tr>
-${row(t.loyerMensuel, r.loyerHT, r.tvaFi, r.loyerTTC)}
-${row(t.totalLoyers(r.duree), r.loyerHT * r.duree, r.tvaFi * r.duree, r.loyerTTC * r.duree)}
-${opt ? row(t.optionLigne, r.vrNette, r.vrNette * 0.19, r.vrNetteTTC) : ''}
-${row(t.coutTotal, r.loyerHT * r.duree + (opt ? r.vrNette : 0), r.tvaFi * r.duree + (opt ? r.vrNette * 0.19 : 0), r.loyerTTC * r.duree + (opt ? r.vrNetteTTC : 0), 'tot')}
-</table><div class="note">${t.recapNote}</div>`,
-  });
-  blocks.push(...clausesAndSignatures(lang, opts.annexeCG));
-  if (opts.annexeCG) blocks.push(...annexBlocks(lang));
+  blocks.push(...clausesAndSignatures(lang));
 
   return {
     title: `${t.offre} ${ref}`,
@@ -322,15 +284,14 @@ export function fleetDocument(lines: FleetLine[], client: string, ref: string, d
   const t = T[lang];
   const da = DA[lang];
   const tot = fleetTotals(lines);
-  const anyOpt = lines.some(l => l.params.optRevente);
   const km = lang === 'fr' ? 'km' : 'كم';
 
-  const head = `<tr><th>#</th><th>${t.vehicule}</th><th class="r">${t.duree}</th><th class="r">${t.kmTotal}</th><th class="r">${t.qte}</th><th class="r">${t.unitHT}</th><th class="r">${t.unitTTC}</th>${anyOpt ? `<th class="r">${t.vrUnit}</th>` : ''}<th class="r">${t.totalMois}</th></tr>`;
+  const head = `<tr><th>#</th><th>${t.vehicule}</th><th class="r">${t.duree}</th><th class="r">${t.kmTotal}</th><th class="r">${t.qte}</th><th class="r">${t.unitHT}</th><th class="r">${t.unitTTC}</th><th class="r">${t.totalMois}</th></tr>`;
   const body = tot.rows.map(({ l, r }, i) => {
     const v = vehicleOf(l.params, lang);
-    return `<tr><td class="num">${i + 1}</td><td><span class="ltr">${esc(v.model)} <span style="color:#888">${esc(v.version)}</span></span></td><td class="r"><span class="num">${r.duree}</span> ${t.mois}</td><td class="r"><span class="num">${n0(r.kmTotal)}</span> ${km}</td><td class="r num">${l.qty}</td><td class="r num">${n0(r.loyerHT)}</td><td class="r num">${n0(r.loyerTTC)}</td>${anyOpt ? `<td class="r num">${l.params.optRevente ? n0(r.vrNette) : '—'}</td>` : ''}<td class="r num">${n0(r.loyerTTC * l.qty)}</td></tr>`;
+    return `<tr><td class="num">${i + 1}</td><td><span class="ltr">${esc(v.model)} <span style="color:#888">${esc(v.version)}</span></span></td><td class="r"><span class="num">${r.duree}</span> ${t.mois}</td><td class="r"><span class="num">${n0(r.kmTotal)}</span> ${km}</td><td class="r num">${l.qty}</td><td class="r num">${n0(r.loyerHT)}</td><td class="r num">${n0(r.loyerTTC)}</td><td class="r num">${n0(r.loyerTTC * l.qty)}</td></tr>`;
   }).join('');
-  const totRow = `<tr class="tot"><td></td><td>${t.totalFlotte}</td><td></td><td></td><td class="r num">${tot.nb}</td><td></td><td></td>${anyOpt ? '<td></td>' : ''}<td class="r num">${n0(tot.ttc)}</td></tr>`;
+  const totRow = `<tr class="tot"><td></td><td>${t.totalFlotte}</td><td></td><td></td><td class="r num">${tot.nb}</td><td></td><td></td><td class="r num">${n0(tot.ttc)}</td></tr>`;
   const box = (l: string, v: number, c = '') => `<div class="box"><div class="lbl">${l}</div><div class="val ${c}"><span class="num">${n0(v)}</span> ${da}</div></div>`;
 
   // Prestations : celles du premier véhicule (paramètres de services communs à la flotte en pratique)
@@ -346,8 +307,7 @@ export function fleetDocument(lines: FleetLine[], client: string, ref: string, d
     { html: `<div class="grid3" style="margin-top:8px">${box(t.totalContrat, tot.contrat)}${box(t.totalDepot, tot.depot, 'c-green')}${box(t.financement, tot.achat, 'c-gold')}</div>` },
   ];
   if (lines.length) blocks.push({ html: `${st(lang, 'services')}<div class="svc">${servicesList(lines[0].params, lang).map(s => `<div>${s}</div>`).join('')}</div>` });
-  blocks.push(...clausesAndSignatures(lang, opts.annexeCG));
-  if (opts.annexeCG) blocks.push(...annexBlocks(lang));
+  blocks.push(...clausesAndSignatures(lang));
 
   return {
     title: `${t.flotte} ${ref}`,
