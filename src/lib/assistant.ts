@@ -109,11 +109,11 @@ export function offerContext(params: SimulatorParams) {
   const s = snapshot(params);
   const sc = scenarioTable(r).map(x => `${x.key} (${x.sc.desc.replace(/\.$/, "")}) : ROE ${pc(x.pl.roeEff)} %, résultat net ${n0(x.pl.resultatNet)} DA`).join(' ; ');
   const services = [
-    'entretien constructeur tous les 10 000 km (réseau TALHA AUTO)',
+    'entretien constructeur',
     params.c_pneu > 0 && 'pneumatiques',
     'Takaful dommages et responsabilité civile',
     params.c_assistance > 0 && 'assistance 24 h/24',
-    params.c_veh_d > 0 && `véhicule de remplacement (${params.c_veh_j} jours/an)`,
+    params.c_veh_d > 0 && 'véhicule de remplacement',
     params.c_mob > 0 && 'mobilité / télématique',
     params.p_vignette > 0 && 'vignette',
   ].filter(Boolean).join(', ');

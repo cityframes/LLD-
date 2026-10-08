@@ -13,7 +13,6 @@ const input = "w-full p-2 bg-[var(--color-bg2)] border border-[var(--color-borde
 
 export function OfferDialog({ build, email, onClose }: Props) {
   const [lang, setLang] = useState<Lang>('fr');
-  const [annexeCG, setAnnexeCG] = useState(true);
   const [busy, setBusy] = useState('');
   const [msg, setMsg] = useState<{ t: string; ok?: boolean } | null>(null);
   const [gmail, setGmail] = useState(false);
@@ -22,9 +21,9 @@ export function OfferDialog({ build, email, onClose }: Props) {
   const frame = useRef<HTMLIFrameElement>(null);
   const pdfCache = useRef<Record<string, Blob>>({});
 
-  const doc = useMemo(() => build({ lang, annexeCG }), [build, lang, annexeCG]);
+  const doc = useMemo(() => build({ lang }), [build, lang]);
   const html = useMemo(() => documentHTML(doc), [doc]);
-  const key = `${lang}-${annexeCG}`;
+  const key = lang;
 
   useEffect(() => { gmailAvailable().then(setGmail); }, []);
   useEffect(() => { setMail(email(lang)); }, [lang, email]);
@@ -87,7 +86,7 @@ export function OfferDialog({ build, email, onClose }: Props) {
         t: reason === 'not_connected' ? 'Gmail n\'est pas connecté à votre compte Claude : ajoutez-le dans Paramètres, puis Connecteurs.'
           : reason === 'reauth' ? 'Reconnectez Gmail dans Paramètres, puis Connecteurs.'
           : reason === 'refused' ? 'L\'accès à Gmail n\'a pas été autorisé pour cette page.'
-          : reason === 'too_large' ? 'Le PDF est trop lourd pour être joint ici : décochez les conditions générales, ou téléchargez le PDF et joignez-le à la main.'
+          : reason === 'too_large' ? 'Le PDF est trop lourd pour être joint ici : téléchargez le PDF et joignez-le à la main.'
           : reason === 'absent' ? 'Gmail n\'est pas disponible ici.'
           : 'Gmail n\'a pas répondu. Vérifiez vos brouillons avant de réessayer.',
         });
@@ -110,10 +109,6 @@ export function OfferDialog({ build, email, onClose }: Props) {
               </button>
             ))}
           </div>
-          <label className="flex items-center gap-1.5 text-[11px] text-[var(--color-txt2)] cursor-pointer">
-            <input type="checkbox" checked={annexeCG} onChange={e => setAnnexeCG(e.target.checked)} />
-            Joindre les conditions générales
-          </label>
           <button type="button" onClick={onClose} className="text-[var(--color-txt3)] hover:text-[var(--color-txt)] text-[18px] leading-none px-1 cursor-pointer" aria-label="Fermer">×</button>
         </div>
 
@@ -144,7 +139,7 @@ export function OfferDialog({ build, email, onClose }: Props) {
             {busy && <div className="text-[10.5px] text-[var(--color-txt2)]">⏳ {busy}</div>}
             {msg && <div className={"text-[10.5px] leading-snug " + (msg.ok ? "text-[#39c98a]" : "text-[#e8aa60]")}>{msg.t}</div>}
             <div className="text-[9.5px] text-[var(--color-txt3)] leading-snug pt-2 border-t border-[var(--color-border-light)]">
-              Les conditions générales jointes sont le texte arabe de l'Ijara opérationnelle (21 articles). Les prestations listées suivent les services chiffrés dans la simulation.
+              Les prestations listées suivent les services chiffrés dans la simulation.
             </div>
           </div>
         </div>
