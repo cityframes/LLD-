@@ -39,7 +39,7 @@ const T = {
     ht: 'Loyer mensuel HT', tva: 'TVA mensuelle (19 %)', ttc: 'Loyer mensuel TTC', parMois: 'DA / mois',
     vehicule: 'Véhicule loué', modele: 'Modèle', version: 'Version', cv: 'Puissance fiscale', prix: 'Prix d\'acquisition',
     conditions: 'Conditions du contrat', duree: 'Durée', mois: 'mois', kmTotal: 'Kilométrage total', kmAn: 'Kilométrage annuel',
-    apport: 'Apport initial', tolerance: 'Tolérance kilométrique', depot: 'Hamish Jiddiyyah (dépôt de garantie)', depotRest: 'restitué en fin de contrat',
+    apport: 'Apport initial (premier loyer majoré)', fraisDossier: (ht: string, ttc: string) => `Frais de dossier : ${ht} DA HT (${ttc} DA TTC), payables à la signature.`, tolerance: 'Tolérance kilométrique', depot: 'Hamish Jiddiyyah (dépôt de garantie)', depotRest: 'restitué en fin de contrat',
     services: 'Prestations incluses dans le loyer',
     kmSup: 'Kilomètre supplémentaire', kmHT: 'Prix du km HT', kmTVA: 'TVA (19 %)', kmTTC: 'Prix du km TTC', kmSupTxt: (f: string, p: string, t: string) => `Au-delà du kilométrage contractuel (tolérance ${f} km), chaque kilomètre est facturé ${p} DA HT, soit ${t} DA TTC.`,
     option: 'Option d\'achat en fin de contrat', vrBrute: 'Valeur résiduelle HT', vrFrais: 'Frais de remise en état HT', vrNette: 'Prix de cession HT', vrTTC: 'Prix de cession TTC',
@@ -71,7 +71,7 @@ const T = {
     ht: 'بدل الإيجار الشهري دون رسوم', tva: 'الرسم على القيمة المضافة (19 %)', ttc: 'بدل الإيجار الشهري متضمن الرسوم', parMois: 'دج / شهرياً',
     vehicule: 'المركبة المؤجَّرة', modele: 'الطراز', version: 'النسخة', cv: 'القوة الجبائية', prix: 'سعر الاقتناء',
     conditions: 'شروط العقد', duree: 'المدة', mois: 'شهراً', kmTotal: 'المسافة الإجمالية', kmAn: 'المسافة السنوية',
-    apport: 'الدفعة الأولى', tolerance: 'هامش المسافة المسموح به', depot: 'هامش الجدية (مبلغ الضمان)', depotRest: 'يُرَدّ عند نهاية العقد',
+    apport: 'الدفعة الأولى (أول إيجار مضاف)', fraisDossier: (ht: string, ttc: string) => `مصاريف الملف: ${ht} دج دون احتساب الرسوم (${ttc} دج شاملة الرسوم)، تُدفع عند التوقيع.`, tolerance: 'هامش المسافة المسموح به', depot: 'هامش الجدية (مبلغ الضمان)', depotRest: 'يُرَدّ عند نهاية العقد',
     services: 'الخدمات المشمولة في بدل الإيجار',
     kmSup: 'الكيلومتر الإضافي', kmHT: 'سعر الكيلومتر دون رسوم', kmTVA: 'الرسم على القيمة المضافة (19 %)', kmTTC: 'سعر الكيلومتر متضمن الرسوم', kmSupTxt: (f: string, p: string, t: string) => `بعد تجاوز المسافة المتعاقد عليها (مع هامش ${f} كم)، يُفوتَر كل كيلومتر إضافي بمبلغ ${p} دج دون رسوم، أي ${t} دج متضمن الرسوم.`,
     option: 'خيار الشراء عند نهاية العقد', vrBrute: 'القيمة المتبقية دون رسوم', vrFrais: 'تكاليف إعادة التهيئة دون رسوم', vrNette: 'سعر التنازل دون رسوم', vrTTC: 'سعر التنازل متضمن الرسوم',
@@ -102,7 +102,6 @@ function servicesList(p: SimulatorParams, lang: Lang): string[] {
   if (p.c_pneu > 0) s.push(fr ? 'Remplacement des pneumatiques selon l\'usure' : 'استبدال الإطارات حسب الاهتراء');
   s.push(fr ? 'Takaful dommages et responsabilité civile' : 'التكافل ضد الأضرار والمسؤولية المدنية');
   if (p.p_vignette > 0) s.push(fr ? 'Vignette automobile' : 'قسيمة السيارات');
-  if (p.c_ct > 0) s.push(fr ? 'Contrôle technique périodique' : 'الفحص التقني الدوري');
   if (p.c_assistance > 0) s.push(fr ? 'Assistance et remorquage 24 h/24' : 'المساعدة وسحب المركبة على مدار الساعة');
   if (p.c_veh_d > 0 && p.c_veh_j > 0) s.push(fr ? 'Véhicule de remplacement' : 'سيارة بديلة');
   if (p.c_mob > 0) s.push(fr ? 'Mobilité et télématique' : 'خدمات التنقل والتتبع');
@@ -247,7 +246,7 @@ export function offerDocument(r: Engine, params: SimulatorParams, opts: DocOptio
     { html: `${st(lang, 'vehicule')}<div class="grid4">${box(t.modele, `<span class="ltr">${esc(veh.model)}</span>`)}${box(t.version, `<span class="ltr">${esc(veh.version)}</span>`)}${box(t.cv, `<span class="ltr">${esc(veh.cv)}</span>`)}${box(t.prix, money(r.achat), 'c-gold')}</div>` },
     {
       html: `${st(lang, 'conditions')}<div class="grid3">${box(t.duree, `<span class="num">${r.duree}</span> ${t.mois}`, 'c-blue')}${box(t.kmTotal, `<span class="num">${n0(r.kmTotal)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}${box(t.kmAn, `<span class="num">${n0(kmAn)}</span> ${lang === 'fr' ? 'km/an' : 'كم/سنة'}`)}
-${box(t.apport, money(r.apport))}${box(t.depot, money(r.depot) + ` <span style="font-weight:400;font-size:7.5pt;color:#777">(${t.depotRest})</span>`, 'c-green')}${box(t.tolerance, `<span class="num">${n0(params.p_km_franchise)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}</div>`,
+${box(t.apport, r.apport > 0 ? money(r.apport * 1.19) + ` <span style="font-weight:400;font-size:7.5pt;color:#777">(${n0(r.apport)} HT)</span>` : money(0))}${box(t.depot, money(r.depot) + ` <span style="font-weight:400;font-size:7.5pt;color:#777">(${t.depotRest})</span>`, 'c-green')}${box(t.tolerance, `<span class="num">${n0(params.p_km_franchise)}</span> ${lang === 'fr' ? 'km' : 'كم'}`)}</div>${r.fraisDossier > 0 ? `<div class="note">${t.fraisDossier(n0(r.fraisDossier), n0(r.fraisDossier * 1.19))}</div>` : ''}`,
     },
     { html: `${st(lang, 'services')}<div class="svc">${servicesList(params, lang).map(s => `<div>${s}</div>`).join('')}</div>` },
     { html: `${st(lang, 'kmSup')}<div class="grid3">${box(t.kmHT, `<span class="num">${n2(r.kmSup)}</span> ${da}`, 'c-green')}${box(t.kmTVA, `<span class="num">${n2(r.kmSup * 0.19)}</span> ${da}`, 'c-orange')}${box(t.kmTTC, `<span class="num">${n2(r.kmSup * 1.19)}</span> ${da}`, 'c-blue')}</div><div class="note">${t.kmSupTxt(n0(params.p_km_franchise), n2(r.kmSup), n2(r.kmSup * 1.19))}</div>` },

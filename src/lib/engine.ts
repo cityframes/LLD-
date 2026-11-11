@@ -1,4 +1,4 @@
-import { CATALOG, SimulatorParams, TVA } from "./types";
+import { CATALOG, SimulatorParams, TVA, V11_PROFILES } from "./types";
 import { irr, npv, pmt, r2m } from "./utils";
 import { computeDetailedSmrPlan, SmrSimulationResult } from "./smrCatalog";
 
@@ -26,8 +26,8 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const passAdmin = params.p_pass_admin;
   const targetMargin = params.p_target_margin / 100;
 
-  const smrMkup = (params.p_smr_margin || 10) / 100;
-  const inflAnn = params.p_inflation || 5.0;
+  const smrMkup = (params.p_smr_margin ?? 10) / 100;
+  const inflAnn = params.p_inflation ?? 5.0;
 
   // Calcul du plan d'entretien détaillé 10 000 km Stellantis / TALHA AUTO
   const smrPlan: SmrSimulationResult = computeDetailedSmrPlan({
@@ -49,7 +49,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   // Calcul pneumatiques
   const kmParMois = kmTotal / duree;
   const kmPneuI = params.km_pneu || 40000;
-  const prixPneu = params.c_pneu || 25000;
+  const prixPneu = params.c_pneu ?? 25000;
   let coutPneu = 0;
   const pneuEventsMap = new Set<number>();
   for (let m = 1; m <= duree; m++) {
@@ -70,12 +70,19 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const smrMkupM = (smrPlan.margeBanqueAmountHT / duree) + pneuMkupM;
   const provAleasM = smrPlan.provisionAleasAmountHT / duree;
 
-  const provMob = params.c_mob;
-  const provAssist = params.c_assistance;
-  const provGestion = params.c_gestion;
+  // Indexation des services (option) : coût moyen lissé sur la durée, comme l'entretien
+  let inflServ = 1;
+  if (params.p_infl_services) {
+    let sf = 0;
+    for (let m = 1; m <= duree; m++) sf += Math.pow(1 + inflAnn / 100, (m - 1) / 12);
+    inflServ = sf / duree;
+  }
+  const provMob = params.c_mob * inflServ;
+  const provAssist = params.c_assistance * inflServ;
+  const provGestion = params.c_gestion * inflServ;
   const vehJ = params.c_veh_j;
   const vehD = params.c_veh_d;
-  const vehMens = (vehJ * vehD) / 12;
+  const vehMens = (vehJ * vehD) / 12 * inflServ;
 
   // Bloc Services total mensuel
   const blocSe = provSMR + provAleasM + provPneu + smrMkupM + provMob + provAssist + provGestion + vehMens;
@@ -83,22 +90,34 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const takRC = params.p_tak_rc;
   const vign = params.p_vignette;
 
-  const capex = achat + liv;
-  const vrBrute = achat * vrPct;
+  // Prix réellement payé au concessionnaire (remise) ; la VR reste sur le prix catalogue
+  const remiseFour = Math.min(Math.max((params.p_remise_fournisseur ?? 0) / 100, 0), 0.5);
+  const achatNet = achat * (1 - remiseFour);
+  const capex = achatNet + liv;
+  // Décote de VR du profil client (option)
+  const prof = V11_PROFILES[params.v11_profile] || V11_PROFILES.standard;
+  const vrDecote = params.p_vr_decote_on ? prof.vrHaircut : 0;
+  const vrBrute = achat * vrPct * (1 - vrDecote);
   const vrNette = Math.max(0, vrBrute - vrFrais);
   const vrBruteTTC = vrBrute * (1 + TVA);
   const vrNetteTTC = vrNette * (1 + TVA);
   const vrNegative = vrFrais > vrBrute;
   const vrRiskProv = vrNette * riskVrPct;
 
-  const besoin = capex - apport;
-
   const waccAnn = costDebt * (1 - eqPct) + atroe * eqPct;
   const waccM = r2m(waccAnn);
+
+  // Portage entre le paiement du véhicule et la livraison, au coût des ressources, ajouté au montant financé
+  const delai = Math.max(0, params.p_delai_livraison ?? 0);
+  const portage = capex * (Math.pow(1 + waccAnn, delai / 12) - 1);
+  const besoin = capex + portage - apport;
+  const echoir = !!params.p_terme_echoir;
+  const fraisDossier = Math.max(0, params.p_frais_dossier ?? 0);
   // Taux locatif Ijarah = coût des ressources (WACC) + marge commerciale cible
   const rateLocAnn = waccAnn + targetMargin;
   const rateLocM = r2m(rateLocAnn);
-  const pmtFin = pmt(rateLocM, duree, besoin, vrNette);
+  // Terme à échoir : loyer en début de mois (PMT de type 1)
+  const pmtFin = pmt(rateLocM, duree, besoin, vrNette) / (echoir ? 1 + rateLocM : 1);
 
   let takMDmensHT = 0;
   if (params.veh_idx >= 0 && CATALOG[params.veh_idx]) {
@@ -118,7 +137,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   let sumLGD = 0;
   let sumRevIj = 0;
   for (let m = 1; m <= duree; m++) {
-    const revIj = tempBal * rateLocM;
+    const revIj = (echoir ? tempBal - pmtFin : tempBal) * rateLocM;
     const amortC = m === duree ? (tempBal - vrNette) : (pmtFin - revIj);
     const lgdM = tempBal * lgd / 12;
     sumLGD += lgdM;
@@ -134,7 +153,9 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const tvaFi2 = (blocFi + blocSe + blocLa) * TVA;
   const loyerTTC = loyerHT2 + tvaFi2;
   const prk = loyerHT2 * duree / kmTotal;
-  const kmSup = prk * params.p_km_coef;
+  // Coût réel par km : dépréciation financée + entretien, pneus et marge entretien
+  const coutKm = ((capex - vrNette) + (provSMR + provAleasM + provPneu + smrMkupM) * duree) / kmTotal;
+  const kmSup = (params.p_km_mode === 'cout' ? coutKm : prk) * params.p_km_coef;
 
   // Construction du tableau d'amortissement parfaitement réconcilié
   let bal = besoin;
@@ -142,7 +163,9 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
 
   for (let m = 1; m <= duree; m++) {
     const capDeb = bal;
-    const revIj = bal * rateLocM;
+    // Encours réellement financé pendant le mois (après le loyer payé d'avance en terme à échoir)
+    const encours = echoir ? Math.max(0, capDeb - pmtFin) : capDeb;
+    const revIj = encours * rateLocM;
     const amortC = m === duree ? (capDeb - vrNette) : (pmtFin - revIj);
     const lgdM = capDeb * lgd / 12;
     const capFin = m === duree ? vrNette : bal - amortC;
@@ -165,7 +188,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
     const isPneuMilestone = pneuEventsMap.has(m);
 
     rows.push({
-      m, capDeb, revM: revIj, amortM: amortC, lgdM, capFin,
+      m, capDeb, encours, revM: revIj, amortM: amortC, lgdM, capFin,
       smrM, pneuM, mobM, vehM, mkupM, takHT, vigM: vignM, adj,
       htM, tvaM, ttcM, smrEv: isSmrMilestone, pneuEv: isPneuMilestone
     });
@@ -173,7 +196,8 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   }
 
   return {
-    achat, capex, apport, depot, vrBrute, vrNette, vrBruteTTC, vrNetteTTC, vrFrais, vrNegative,
+    achat, achatNet, remiseFour, portage, delai, echoir, fraisDossier, vrDecote, coutKm, inflServ,
+    capex, apport, depot, depotRessource: !!params.p_depot_ressource, vrBrute, vrNette, vrBruteTTC, vrNetteTTC, vrFrais, vrNegative,
     waccAnn, waccM, rateLocAnn, rateLocM, besoin, duree, kmTotal,
     pmtFin, amortM_avg, revM_avg, riskM, admin, blocFi, sumLGD,
     provSMR, provPneu, smrMkupM, provAleasM, provMob, provAssist, provGestion, vehMens, blocSe,
@@ -208,10 +232,15 @@ export function computePnL(r: ReturnType<typeof computeEngine>, shock: PnLShock 
   let sumDebtCost = 0;
   let sumBal = 0;
 
+  // Dépôt de garantie compté comme ressource gratuite (option) : il remplace d'abord la dette
+  const depotRes = r.depotRessource ? r.depot : 0;
+  // Frais de dossier encaissés à la signature, après IBS
+  cfEquity[0] += r.fraisDossier * (1 - r.ibs);
+
   for (const row of r.rows) {
-    const debtCostM = row.capDeb * (1 - eqPct) * costDebtM;
+    const debtCostM = Math.max(0, row.encours * (1 - eqPct) - depotRes) * costDebtM;
     sumDebtCost += debtCostM;
-    sumBal += row.capDeb;
+    sumBal += row.encours;
     // Résultat avant impôt du mois :
     // Revenu locatif + Markup SMR + Ajustement de loyer (+/-) + LGD/frais refacturés - LGD - Frais admin - Coût dette
     let profitM = (row.revM + r.smrMkupM + r.leaseAdj + passM)
@@ -232,7 +261,7 @@ export function computePnL(r: ReturnType<typeof computeEngine>, shock: PnLShock 
   const sumLGD = r.rows.reduce((a, x) => a + x.lgdM, 0);
   const vrCharge = r.vrRiskProv + vrLoss;
 
-  const pnbBrut = sumRevIj + smrMkupTot + laTotal + passTotal;
+  const pnbBrut = sumRevIj + smrMkupTot + laTotal + passTotal + r.fraisDossier;
   const chargesTotal = sumDebtCost + sumLGD + sumAdmin + vrCharge;
   const mfn = pnbBrut - chargesTotal;
   const ibsAmount = mfn * r.ibs;
@@ -259,7 +288,29 @@ export function computePnL(r: ReturnType<typeof computeEngine>, shock: PnLShock 
 
   return {
     equityInvested, equityMoy, sumRevIj, sumLGD, sumDebtCost, sumAdmin,
-    smrMkupTot, laTotal, passTotal, pnbBrut, chargesTotal, mfn, ibsAmount, resultatNet,
+    smrMkupTot, laTotal, passTotal, fraisDossier: r.fraisDossier, pnbBrut, chargesTotal, mfn, ibsAmount, resultatNet,
     irrAnn, vanEquity, vanWacc, roeEff, spread, mfnRate, vrRiskProv: r.vrRiskProv, vrLoss, vrCharge
   };
+}
+
+/**
+ * Résiliation anticipée selon les conditions générales de l'Ijara opérationnelle :
+ *  - avant le 13e mois : indemnité forfaitaire de 6 mois de loyer TTC ;
+ *  - ensuite : LT × 0,32 × DA / (DC − 4), LT = total des loyers TTC du contrat,
+ *    DA = mois restants, DC = durée du contrat.
+ * Position de la banque = indemnité + valeur de revente estimée − capital restant à financer.
+ * La valeur de revente est une estimation linéaire entre le prix d'achat et la VR brute.
+ */
+export function resiliationTable(r: ReturnType<typeof computeEngine>, mois?: number[]) {
+  const dc = r.duree;
+  const lt = r.loyerTTC * dc;
+  const list = (mois && mois.length ? mois : [6, 12, 18, 24, 30, 36, 42, 48, 54].filter(m => m < dc));
+  return list.filter(m => m >= 1 && m < dc).map(m => {
+    const da = dc - m;
+    const indemnite = m < 13 ? 6 * r.loyerTTC : (dc > 4 ? lt * 0.32 * da / (dc - 4) : 0);
+    const capitalRestant = r.rows[m - 1].capFin;
+    const valeurRevente = r.achat - (r.achat - r.vrBrute) * m / dc;
+    const position = indemnite + valeurRevente - capitalRestant;
+    return { m, da, indemnite, capitalRestant, valeurRevente, position };
+  });
 }
