@@ -90,7 +90,7 @@ export const DEFAULTS: SimulatorParams = {
   optRevente: true,
 
   p_duree_min: 24,
-  p_duree_max: 60,
+  p_duree_max: 59, // durée maximale des conditions générales Ijara
   p_target_margin: 4.8,
   p_pass_lgd: false,
   p_pass_admin: false,

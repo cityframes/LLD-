@@ -122,7 +122,7 @@ check('Grille d\'options : la case courante redonne la simulation, et la VR bais
   const cur = g.find(row => row[0].kmAn === 30000)!.find(c => c.duree === 48)!;
   near(cur.loyerHT, run().r.loyerHT, 0.01);
   assert.ok(adjustedVrPct(DEFAULTS, 60, 30000) < adjustedVrPct(DEFAULTS, 36, 30000));
-  assert.ok(g.every(row => row[0].loyerHT > row[3].loyerHT), '24 mois plus cher que 60 mois');
+  assert.ok(g.every(row => row[0].loyerHT > row[3].loyerHT), '24 mois plus cher que 59 mois');
 });
 
 check('Délégation : l\'offre budget passe sans visa, une remise demande le visa', () => {
@@ -140,10 +140,10 @@ check('Visa : valable seulement pour la version visée', () => {
 
 
 check('Assistant : un levier change seulement ce qu\'il dit, et la VR suit la durée', () => {
-  const p = applyChanges(DEFAULTS, { duree: 60 });
-  assert.equal(p.p_duree, 60);
+  const p = applyChanges(DEFAULTS, { duree: 59 });
+  assert.equal(p.p_duree, 59);
   assert.equal(kmAnOf(p), kmAnOf(DEFAULTS), 'kilométrage annuel conservé');
-  assert.equal(p.p_vr_pct, adjustedVrPct(DEFAULTS, 60, kmAnOf(DEFAULTS)), 'VR ajustée');
+  assert.equal(p.p_vr_pct, adjustedVrPct(DEFAULTS, 59, kmAnOf(DEFAULTS)), 'VR ajustée');
   assert.equal(p.p_target_margin, DEFAULTS.p_target_margin);
   const q = applyChanges(DEFAULTS, { marge: 4 });
   assert.equal(q.p_vr_pct, DEFAULTS.p_vr_pct); assert.equal(q.p_duree, DEFAULTS.p_duree);
@@ -154,7 +154,7 @@ check('Assistant : un levier change seulement ce qu\'il dit, et la VR suit la du
 check('Assistant : les valeurs renvoyées par Claude sont filtrées', () => {
   assert.deepEqual(sanitizeChanges({ duree: '60', marge: 'abc', sans_assistance: 'oui', inconnu: 3 }), { duree: 60 });
   const p = applyChanges(DEFAULTS, { duree: 500, marge: 99, apport: -10 });
-  assert.equal(p.p_duree, 84); assert.equal(p.p_target_margin, 20); assert.equal(p.p_apport, 0);
+  assert.equal(p.p_duree, 59, 'durée plafonnée à 59 mois (conditions générales)'); assert.equal(p.p_target_margin, 20); assert.equal(p.p_apport, 0);
 });
 
 check('Assistant : pré-remplissage depuis une demande client', () => {
@@ -188,5 +188,17 @@ await (async () => {
     assert.equal(a, `LLD-${y}-0001`); assert.equal(b, `LLD-${y}-0002`);
   });
 })();
+
+check('Un paramètre mis à zéro est respecté (pneus, inflation, marge entretien)', () => {
+  assert.equal(run({ c_pneu: 0 }).r.provPneu, 0, 'pneus non inclus = 0 DA');
+  assert.ok(run({ c_pneu: 0 }).r.loyerHT < run().r.loyerHT);
+  assert.ok(run({ p_inflation: 0 }).r.loyerHT < run().r.loyerHT, 'inflation 0 % plus basse que 5 %');
+  assert.equal(run({ p_smr_margin: 0 }).r.smrMkupM, 0, 'aucune marge entretien ni pneus');
+});
+
+check('Durée maximale : 59 mois (conditions générales)', () => {
+  assert.ok(DEFAULTS.p_duree_max <= 59);
+  assert.ok(optionsGrid(DEFAULTS).every(row => row.every(c => c.duree <= 59)));
+});
 
 console.log(`\n${ok} contrôle(s) réussi(s)`);
