@@ -72,7 +72,8 @@ export function optionParams(params: SimulatorParams, duree: number, kmAn: numbe
   };
 }
 
-export const GRID_DUREES = [24, 36, 48, 60];
+// 59 mois = durée maximale fixée par les conditions générales de l'Ijara opérationnelle
+export const GRID_DUREES = [24, 36, 48, 59];
 export const GRID_KM_AN = [20000, 30000, 40000];
 
 /** Grille des options : loyer et rentabilité pour chaque durée × kilométrage annuel. */

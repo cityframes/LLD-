@@ -37,7 +37,7 @@ export function PricingCenterV11() {
 
   let cls = 'good', label = '✓ ACCEPTABLE', why: string[] = [];
   const dmin = params.p_duree_min || 36;
-  const dmax = params.p_duree_max || 60;
+  const dmax = params.p_duree_max || 59;
   
   if (engineResult.duree < dmin || engineResult.duree > dmax) { cls = 'bad'; label = '✗ HORS POLITIQUE'; why.push('durée hors limites'); }
   if (engineResult.vrNegative) { cls = 'bad'; label = '✗ HORS POLITIQUE'; why.push('VR nette négative'); }

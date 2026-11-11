@@ -26,8 +26,8 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const passAdmin = params.p_pass_admin;
   const targetMargin = params.p_target_margin / 100;
 
-  const smrMkup = (params.p_smr_margin || 10) / 100;
-  const inflAnn = params.p_inflation || 5.0;
+  const smrMkup = (params.p_smr_margin ?? 10) / 100;
+  const inflAnn = params.p_inflation ?? 5.0;
 
   // Calcul du plan d'entretien détaillé 10 000 km Stellantis / TALHA AUTO
   const smrPlan: SmrSimulationResult = computeDetailedSmrPlan({
@@ -49,7 +49,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   // Calcul pneumatiques
   const kmParMois = kmTotal / duree;
   const kmPneuI = params.km_pneu || 40000;
-  const prixPneu = params.c_pneu || 25000;
+  const prixPneu = params.c_pneu ?? 25000;
   let coutPneu = 0;
   const pneuEventsMap = new Set<number>();
   for (let m = 1; m <= duree; m++) {
