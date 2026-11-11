@@ -29,7 +29,8 @@ export function PricingCenterV11() {
   const sc = V11_SCENARIOS[params.v11_scenario] || V11_SCENARIOS.base;
 
   const mvr = Math.max(0, Math.min(0.70, engineResult.vrBrute / engineResult.achat + sc.vr));
-  const rv = Math.max(0, mvr * (1 - prof.vrHaircut));
+  // VR retenue : la décote du profil est déjà dans vrBrute quand l'option est active
+  const rv = Math.max(0, params.p_vr_decote_on ? mvr : mvr * (1 - prof.vrHaircut));
   const ftp = Math.max(0, engineResult.costDebt + sc.cost);
   // Rentabilité recalculée sous le scénario : le loyer reste celui du contrat,
   // la VR réalisée et le coût de refinancement subissent le choc.

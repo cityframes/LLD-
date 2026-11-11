@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { DEFAULTS, SimulatorParams } from '../src/lib/types';
-import { computeEngine, computePnL } from '../src/lib/engine';
+import { computeEngine, computePnL, resiliationTable } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
 import { validationAlerts, canSubmit, nextRef, Cotation } from '../src/lib/team';
 import { applyChanges, snapshot, sanitizeChanges, paramsFromRequest, kmAnOf } from '../src/lib/assistant';
@@ -199,6 +199,60 @@ check('Un paramètre mis à zéro est respecté (pneus, inflation, marge entreti
 check('Durée maximale : 59 mois (conditions générales)', () => {
   assert.ok(DEFAULTS.p_duree_max <= 59);
   assert.ok(optionsGrid(DEFAULTS).every(row => row.every(c => c.duree <= 59)));
+});
+
+check('Lot 5 : par défaut, le calcul historique est inchangé', () => {
+  const { r, pl } = run();
+  near(r.loyerHT, 102952, 1, 'loyer HT de référence');
+  near(pl.roeEff * 100, 22.96, 0.01, 'ROE de référence');
+});
+
+check('Terme à échoir : loyer plus bas, amortissement réconcilié', () => {
+  const a = run({ p_terme_echoir: true }).r, b = run().r;
+  near(a.pmtFin, b.pmtFin / (1 + b.rateLocM), 0.01);
+  near(a.rows[a.duree - 1].capFin, a.vrNette, 0.01, 'capital final = VR nette');
+  a.rows.slice(0, -1).forEach(x => near(x.amortM + x.revM, a.pmtFin, 0.01, `mois ${x.m}`));
+});
+
+check('Dépôt compté comme ressource : coût de la dette plus bas, loyer inchangé', () => {
+  const a = run({ p_depot_ressource: true }), b = run();
+  assert.equal(a.r.loyerHT, b.r.loyerHT);
+  assert.ok(a.pl.sumDebtCost < b.pl.sumDebtCost && a.pl.roeEff > b.pl.roeEff);
+});
+
+check('Frais de dossier : revenu en plus, loyer inchangé', () => {
+  const a = run({ p_frais_dossier: 20000 }), b = run();
+  assert.equal(a.r.loyerHT, b.r.loyerHT);
+  near(a.pl.pnbBrut - b.pl.pnbBrut, 20000, 0.01);
+  assert.ok(a.pl.irrAnn > b.pl.irrAnn);
+});
+
+check('Remise concessionnaire et portage changent le montant financé, pas la VR', () => {
+  const a = run({ p_remise_fournisseur: 5 }).r, b = run().r;
+  near(b.besoin - a.besoin, DEFAULTS.p_achat * 0.05, 0.01);
+  assert.equal(a.vrBrute, b.vrBrute);
+  const c = run({ p_delai_livraison: 3 }).r;
+  assert.ok(c.portage > 0 && c.besoin > b.besoin && c.loyerHT > b.loyerHT);
+});
+
+check('Décote de VR et indexation des services augmentent le loyer', () => {
+  const b = run().r;
+  near(run({ p_vr_decote_on: true }).r.vrBrute, b.vrBrute * 0.9, 0.01, 'profil standard −10 %');
+  assert.ok(run({ p_vr_decote_on: true }).r.loyerHT > b.loyerHT);
+  assert.ok(run({ p_infl_services: true }).r.loyerHT > b.loyerHT);
+});
+
+check('Km supplémentaire au coût réel', () => {
+  const a = run({ p_km_mode: 'cout' }).r;
+  near(a.kmSup, a.coutKm * DEFAULTS.p_km_coef, 1e-9);
+  assert.ok(a.kmSup < run().r.kmSup);
+});
+
+check('Résiliation : 6 loyers avant le 13e mois, puis barème des conditions générales', () => {
+  const { r } = run();
+  const t = resiliationTable(r, [6, 24]);
+  near(t[0].indemnite, 6 * r.loyerTTC, 0.01);
+  near(t[1].indemnite, r.loyerTTC * 48 * 0.32 * 24 / 44, 0.01);
 });
 
 console.log(`\n${ok} contrôle(s) réussi(s)`);

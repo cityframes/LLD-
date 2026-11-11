@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStateContext } from '../Store';
 import { fDZA, fmt } from '../lib/utils';
+import { resiliationTable } from '../lib/engine';
 import { cn } from '../lib/utils';
 
 export function PnLTab() {
@@ -41,6 +42,7 @@ export function PnLTab() {
                 <Tr label="Marge sur SMR Mécanique (markup)" val={pl.smrMkupTot} valColor="var(--color-green)" />
                 <Tr label="Ajustement de loyer (remise / majoration)" val={pl.laTotal} valColor={pl.laTotal < 0 ? "var(--color-red)" : "var(--color-green)"} />
                 <Tr label="LGD & frais de gestion refacturés au client" val={pl.passTotal} valColor="var(--color-green)" />
+                {pl.fraisDossier > 0 && <Tr label="Frais de dossier (à la signature)" val={pl.fraisDossier} valColor="var(--color-green)" />}
                 <tr className="bg-[rgba(201,168,76,.04)] border-t-2 border-[var(--color-border-main)] font-bold"><td className="px-3.5 py-1.5 text-[12px] text-[var(--color-txt)]">= PNB Brut</td><td className="px-3.5 py-1.5 text-[13px] text-right text-[var(--color-gold-l)] font-jetbrains">{fDZA(pl.pnbBrut)}</td></tr>
                 
                 <tr className="bg-black/20 text-[var(--color-txt3)] text-[9px] uppercase tracking-[1px] font-bold"><td colSpan={2} className="px-3.5 py-1.5 border-t border-[var(--color-border-light)]">CHARGES DIRECTES</td></tr>
@@ -131,6 +133,7 @@ export function PnLTab() {
           </div>
         </div>
       </div>
+      <ResiliationPanel />
     </div>
   );
 }
@@ -187,6 +190,50 @@ function TrafficLight({ label, status }: { label: string, status: 'good' | 'warn
       status === 'bad' && "bg-[#c0392b24] text-[#e57373] border border-[#c0392b33]"
     )}>
       {label}
+    </div>
+  );
+}
+
+function ResiliationPanel() {
+  const { engineResult: r } = useStateContext();
+  const rows = resiliationTable(r);
+  if (!rows.length) return null;
+  return (
+    <div className="bg-[var(--color-card)] border border-[var(--color-border-light)] rounded-[10px] overflow-hidden shadow-[0_3px_16px_rgba(0,0,0,0.28)] mt-4.5">
+      <div className="flex items-center gap-2.5 p-3 px-3.5 border-b border-[var(--color-border-light)] relative before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-[var(--color-red)]">
+        <div className="w-[26px] h-[26px] rounded-[5px] flex items-center justify-center text-[13px] shrink-0 bg-[var(--color-red-d)]">🚪</div>
+        <div>
+          <div className="font-bold text-[11.5px] text-[var(--color-txt)]">Résiliation anticipée — barème des conditions générales</div>
+          <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[0.7px] mt-0.5">Avant le 13e mois : 6 loyers TTC · ensuite LT × 0,32 × mois restants / (durée − 4)</div>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] min-w-[560px]">
+          <thead>
+            <tr className="bg-black/20 text-[var(--color-txt3)] text-[9px] uppercase tracking-[1px]">
+              <th className="px-3 py-1.5 text-left">Sortie au mois</th>
+              <th className="px-3 py-1.5 text-right">Indemnité client</th>
+              <th className="px-3 py-1.5 text-right">Capital restant</th>
+              <th className="px-3 py-1.5 text-right">Revente estimée</th>
+              <th className="px-3 py-1.5 text-right">Position banque</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(x => (
+              <tr key={x.m} className="border-t border-[var(--color-border-light)]">
+                <td className="px-3 py-1.5 text-[var(--color-txt2)]">{x.m} <span className="text-[var(--color-txt3)]">({x.da} restants)</span></td>
+                <td className="px-3 py-1.5 text-right font-jetbrains">{fDZA(x.indemnite)}</td>
+                <td className="px-3 py-1.5 text-right font-jetbrains">{fDZA(x.capitalRestant)}</td>
+                <td className="px-3 py-1.5 text-right font-jetbrains">{fDZA(x.valeurRevente)}</td>
+                <td className="px-3 py-1.5 text-right font-jetbrains font-bold" style={{ color: x.position < 0 ? 'var(--color-red)' : 'var(--color-green)' }}>{fDZA(x.position)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="text-[9.5px] text-[var(--color-txt3)] px-3.5 py-2 border-t border-[var(--color-border-light)]">
+        Position banque = indemnité + revente estimée − capital restant. La revente est estimée en ligne droite entre le prix d'achat et la VR : la décote réelle est plus forte les premières années, la position est donc optimiste au début.
+      </div>
     </div>
   );
 }
