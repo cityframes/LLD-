@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStateContext } from '../Store';
 import { CATALOG } from '../lib/types';
+import { PLANS_ENTRETIEN } from '../lib/plansEntretien';
 import { fmt, fDZA } from '../lib/utils';
 
 export function Catalog() {
@@ -34,7 +35,7 @@ export function Catalog() {
           <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[1px]">Sélection automatique du prix d'acquisition et de la prime d'assurance annuelle (DZA TTC)</div>
         </div>
         <div className="ml-auto font-jetbrains text-[9px] font-bold px-2 py-0.5 rounded-full bg-[var(--color-green-d)] text-[var(--color-green)] border border-[#27ae7a33] tracking-[0.5px] hidden sm:block">
-          ✓ Tarifs officiels · DZA TTC
+          ✓ Fiat + HR Automobiles nov. 2026
         </div>
       </div>
       
@@ -54,10 +55,14 @@ export function Catalog() {
             }}
           >
             <option value="-1">— Saisie manuelle —</option>
-            {CATALOG.map((c, i) => (
-              <option key={i} value={i} className="bg-[#0d1e38] text-[var(--color-txt)]">
-                {c.model} {c.version !== '—' ? c.version : ''} · {c.cv}
-              </option>
+            {Array.from(new Set(CATALOG.map(c => c.source || 'Catalogue Fiat (référence budget 2027)'))).map(src => (
+              <optgroup key={src} label={src}>
+                {CATALOG.map((c, i) => ({ c, i })).filter(({ c }) => (c.source || 'Catalogue Fiat (référence budget 2027)') === src).map(({ c, i }) => (
+                  <option key={i} value={i} className="bg-[#0d1e38] text-[var(--color-txt)]">
+                    {c.model} {c.version !== '—' ? c.version : ''}{c.cv !== '—' ? ` · ${c.cv}` : ''}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           {!v && (
@@ -85,18 +90,27 @@ export function Catalog() {
               <div>
                 <div className="text-[8.5px] uppercase tracking-[1px] text-[var(--color-txt3)] mb-0.5">Prix Acquisition HT</div>
                 <div className="font-jetbrains text-[12px] font-bold text-[var(--color-gold-l)]">{fDZA(v.prix)}</div>
+                {v.prix_ttc && <div className="text-[9px] text-[var(--color-txt3)]">Tarif {fDZA(v.prix_ttc)} TTC</div>}
               </div>
             </div>
             
             <div className="flex items-center gap-2 bg-[#27ae7a12] border border-[#27ae7a2e] rounded-md p-2 px-3 mt-2.5">
               <span className="text-[16px]">🛡️</span>
               <div className="text-[11px] text-[var(--color-txt2)] flex-1">
-                Prime <strong>Takaful Tous Risques</strong> annuelle (catalogue officiel)
+                Prime <strong>Takaful Tous Risques</strong> annuelle {v.prime_estimee ? <span className="text-[#e8aa60]">(estimée : à remplacer par la cotation de l'assureur)</span> : '(catalogue officiel)'}
               </div>
               <div>
                 <div className="font-jetbrains text-[13px] font-bold text-[var(--color-green)]">{fDZA(v.prime_ttc)}</div>
               </div>
             </div>
+            {v.entretien && PLANS_ENTRETIEN[v.entretien] && (
+              <div className="flex items-center gap-2 bg-[#e0a04a12] border border-[#e0a04a2e] rounded-md p-2 px-3 mt-2">
+                <span className="text-[16px]">🔧</span>
+                <div className="text-[11px] text-[var(--color-txt2)] flex-1">
+                  Plan d'entretien <strong>{PLANS_ENTRETIEN[v.entretien].label}</strong> : révision tous les {fmt(PLANS_ENTRETIEN[v.entretien].palierKm)} km ou {PLANS_ENTRETIEN[v.entretien].palierMois} mois <span className="text-[#e8aa60]">(coûts estimés)</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

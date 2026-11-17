@@ -19,7 +19,7 @@ export function Tabs() {
     <>
       <div className="flex flex-wrap mb-4.5 bg-[var(--color-card)] border border-[var(--color-border-main)] rounded-[10px] overflow-hidden">
         <TabButton active={activeTab === 'sim'} onClick={() => setActiveTab('sim')}>🧮 Simulateur & Pricing</TabButton>
-        <TabButton active={activeTab === 'smr'} onClick={() => setActiveTab('smr')}>🔧 Plan SMR 10 000 KM</TabButton>
+        <TabButton active={activeTab === 'smr'} onClick={() => setActiveTab('smr')}>🔧 Plan d'entretien</TabButton>
         <TabButton active={activeTab === 'pnl'} onClick={() => setActiveTab('pnl')}>📊 Rentabilité Banque & P&L</TabButton>
         <TabButton active={activeTab === 'amort'} onClick={() => setActiveTab('amort')}>📋 Tableau d'Amortissement</TabButton>
         <TabButton active={activeTab === 'ai'} onClick={() => setActiveTab('ai')}>🤖 Assistant</TabButton>

@@ -4,6 +4,8 @@
  * Intervalles réguliers : tous les 10 000 km et échéances temporelles annuelles.
  */
 
+import { PlanEntretien, TAUX_REFERENCE, vidangeHT } from './plansEntretien';
+
 export interface LaborRates {
   revision: number;    // 1 347.89 DA/h HT
   freinage: number;    // 1 347.89 DA/h HT
@@ -529,6 +531,7 @@ export interface SmrSimulationConfig {
   customPrices?: Record<string, number>;
   customHours?: Record<string, number>;
   laborRates?: LaborRates;
+  plan?: PlanEntretien;       // plan d'entretien du modèle (sinon barème TALHA 10 000 km)
 }
 
 export interface MilestoneItem {
@@ -637,7 +640,16 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
   const dureeMois = Math.max(1, cfg.dureeMois);
   const dureeAnnees = dureeMois / 12;
   const kmActuel = cfg.kmActuel || 0;
-  const rates = cfg.laborRates || DEFAULT_LABOR_RATES;
+  const plan = cfg.plan;
+  // Taux horaires : barème TALHA, mis à l'échelle du taux du plan d'entretien du modèle
+  const baseRates = cfg.laborRates || DEFAULT_LABOR_RATES;
+  const rateCoef = plan ? plan.tauxHoraire / TAUX_REFERENCE : 1;
+  const rates: LaborRates = {
+    revision: baseRates.revision * rateCoef,
+    freinage: baseRates.freinage * rateCoef,
+    diagnostic: baseRates.diagnostic * rateCoef,
+    ht: baseRates.ht * rateCoef,
+  };
   const inflationRate = (cfg.inflationAnnuelle || 0) / 100;
   const remisePct = (cfg.remiseConcessionnaire || 0) / 100;
   const margePct = (cfg.margeBanque || 0) / 100;
@@ -645,10 +657,29 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
   const tva = (cfg.tauxTva !== undefined ? cfg.tauxTva : 19) / 100;
 
   // Liste des opérations actives
+  const PALIER_OPS = ['revision', 'vidangeDiesel', 'vidangeEssence', 'vidangeGpl', 'purgeGazoleDiesel'];
   const activeOps = SMR_OPERATIONS_CATALOG.filter(op => {
     if (!isOpCompatible(op, cfg.fuel)) return false;
     if (op.big && !cfg.includeBig) return false;
+    // Distribution par chaîne : pas de kit de distribution à remplacer
+    if (plan && op.id.startsWith('kitCalage') && plan.distribution.type === 'chaine') return false;
     return true;
+  }).map(op => {
+    if (!plan) return op;
+    // Plan du modèle : révision et vidange au palier du constructeur, distribution à son échéance,
+    // prix des autres pièces ajustés par le coefficient de la marque
+    if (PALIER_OPS.includes(op.id)) {
+      const palier = `${(plan.palierKm / 1000).toLocaleString('fr-FR')}k`;
+      const shortName = op.id === 'revision' ? `Révision générale ${palier}`
+        : op.id.startsWith('vidange') ? `Vidange & huile ${plan.huileL.toLocaleString('fr-FR')} L` : op.shortName;
+      return { ...op, shortName, intervalKm: plan.palierKm, intervalAns: plan.palierMois / 12, severeKm: undefined, severeAns: undefined,
+        partPrice: op.id.startsWith('vidange') ? vidangeHT(plan) : op.partPrice * plan.coefPieces };
+    }
+    if (op.id.startsWith('kitCalage') && plan.distribution.km) {
+      return { ...op, intervalKm: plan.distribution.km, intervalAns: plan.distribution.ans || op.intervalAns,
+        severeKm: undefined, severeAns: undefined, partPrice: op.partPrice * plan.coefPieces };
+    }
+    return { ...op, partPrice: op.partPrice * plan.coefPieces };
   });
 
   // Détermination des paliers de 10 000 km
@@ -658,7 +689,11 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
   const monthsWithEvents = new Set<number>();
 
   let prevKm = kmActuel;
-  const stepKm = 10000;
+  const stepKm = plan ? plan.palierKm : 10000;
+  const stepMois = plan ? plan.palierMois : 12;
+  // Tolérance de déclenchement : 500 km sur le barème 10 000 km ; demi-palier avec un plan
+  // modèle, pour qu'une opération à 20 000 km ne glisse pas d'un palier de 15 000 km entier
+  const tolKm = plan ? stepKm / 2 : 500;
   const startStep = Math.floor(kmActuel / stepKm) * stepKm + stepKm;
 
   // Pour suivre quand une opération a été faite précédemment
@@ -678,7 +713,7 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
     const month = Math.min(dureeMois, Math.max(1, Math.round(((mKm - kmActuel) / kmTotal) * dureeMois)));
     if (!events.has(month)) events.set(month, mKm);
   }
-  for (let month = 12; month < dureeMois; month += 12) {
+  for (let month = stepMois; month < dureeMois; month += stepMois) {
     if (!events.has(month)) events.set(month, Math.round(kmActuel + kmTotal * month / dureeMois));
   }
   const schedule = [...events.entries()].sort((a, b) => a[0] - b[0]);
@@ -696,7 +731,7 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
       const yearsSinceLast = monthsSinceLast / 12;
 
       // Déclenchement par kilométrage OU par temps révolu
-      const triggerKm = intervalKm < 999999 && kmSinceLast >= intervalKm - 500; // tolérance
+      const triggerKm = intervalKm < 999999 && kmSinceLast >= intervalKm - tolKm; // tolérance
       const triggerTime = intervalAns > 0 && yearsSinceLast >= intervalAns - 0.1;
 
       // Cas spécial liquide de frein : tous les 2 ans
