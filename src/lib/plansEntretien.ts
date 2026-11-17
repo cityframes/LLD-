@@ -1,6 +1,9 @@
 /**
  * Plans d'entretien par famille de moteur (catalogue HR Automobiles, novembre 2026).
  *
+ * Règle de la banque (Yazid, 17/11/2026) : vidange tous les 10 000 km pour TOUS les véhicules,
+ * quel que soit l'intervalle du constructeur.
+ *
  * Aucun concessionnaire algérien ne publie de forfait d'entretien : les montants ci-dessous
  * sont des ESTIMATIONS construites ainsi :
  *  - base : barème TALHA AUTO déjà utilisé par le simulateur (main-d'œuvre 1 347,89 DA/h HT,
@@ -56,9 +59,9 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
   }),
   dfsk_10: P({
     id: 'dfsk_10', label: 'DFSK 1.0 essence (minibus)',
-    palierKm: 5000, palierMois: 6, huileL: 3.0, prixHuileL: 1300, filtreHuile: 900,
+    palierKm: 10000, palierMois: 6, huileL: 3.0, prixHuileL: 1300, filtreHuile: 900,
     tauxHoraire: 1300, coefPieces: 0.7, distribution: { type: 'chaine' },
-    note: 'Utilitaire chinois : vidange tous les 5 000 km ou 6 mois. Pièces moins chères que le barème Stellantis.',
+    note: 'Utilitaire chinois : le constructeur prévoit 5 000 km ou 6 mois ; règle banque 10 000 km, échéance de 6 mois conservée. Pièces moins chères que le barème Stellantis.',
   }),
   bmw: P({
     id: 'bmw', label: 'BMW B48 essence turbo (X3 G45, 320i G20, 520i G60)',
@@ -102,21 +105,21 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
   }),
   vw_tsi: P({
     id: 'vw_tsi', label: 'Volkswagen 1.5 TSI / 1.5T (Passat, T-Roc, Golf, Tharu)',
-    palierKm: 15000, palierMois: 12, huileL: 4.0, prixHuileL: 2600, filtreHuile: 2000,
+    palierKm: 10000, palierMois: 12, huileL: 4.0, prixHuileL: 2600, filtreHuile: 2000,
     tauxHoraire: 2000, coefPieces: 1.4, distribution: { type: 'courroie', km: 210000, ans: 10 },
-    note: 'Entretien Volkswagen à intervalle fixe : 15 000 km ou 1 an. Huile VW 508.00. Courroie hors durée des contrats.',
+    note: 'Volkswagen prévoit 15 000 km ou 1 an ; règle banque 10 000 km. Huile VW 508.00. Courroie hors durée des contrats.',
   }),
   vw_mpi: P({
     id: 'vw_mpi', label: 'Volkswagen 1.5 MPI (Lavida, Polo)',
-    palierKm: 15000, palierMois: 12, huileL: 4.0, prixHuileL: 2000, filtreHuile: 1800,
+    palierKm: 10000, palierMois: 12, huileL: 4.0, prixHuileL: 2000, filtreHuile: 1800,
     tauxHoraire: 2000, coefPieces: 1.2, distribution: { type: 'courroie', km: 210000, ans: 10 },
-    note: 'Entretien Volkswagen à intervalle fixe : 15 000 km ou 1 an. Courroie hors durée des contrats.',
+    note: 'Volkswagen prévoit 15 000 km ou 1 an ; règle banque 10 000 km. Courroie hors durée des contrats.',
   }),
   audi_tfsi: P({
     id: 'audi_tfsi', label: 'Audi 1.5 TFSI (Q3 35 TFSI)',
-    palierKm: 15000, palierMois: 12, huileL: 4.0, prixHuileL: 2800, filtreHuile: 2500,
+    palierKm: 10000, palierMois: 12, huileL: 4.0, prixHuileL: 2800, filtreHuile: 2500,
     tauxHoraire: 2800, coefPieces: 1.9, distribution: { type: 'courroie', km: 210000, ans: 10 },
-    note: 'Entretien Audi à intervalle fixe : 15 000 km ou 1 an. Marque premium : pièces et main-d\'œuvre plus chères.',
+    note: 'Audi prévoit 15 000 km ou 1 an ; règle banque 10 000 km. Marque premium : pièces et main-d\'œuvre plus chères.',
   }),
   geely_15t: P({
     id: 'geely_15t', label: 'Geely 1.5T (Coolray, Battle)',

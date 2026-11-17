@@ -265,6 +265,7 @@ const hr = (model: string) => {
 check('Catalogue HR Automobiles : 38 véhicules, prix HT = TTC / 1,19, un plan d\'entretien chacun', () => {
   const list = CATALOG.filter(v => v.source === 'HR Automobiles · nov. 2026');
   assert.equal(list.length, 38);
+  Object.values(PLANS_ENTRETIEN).forEach(p => assert.equal(p.palierKm, 10000, `${p.id} : vidange 10 000 km`));
   list.forEach(v => {
     near(v.prix, v.prix_ttc! / 1.19, 0.5, v.model);
     assert.ok(PLANS_ENTRETIEN[v.entretien!], `plan ${v.entretien} de ${v.model}`);
@@ -274,7 +275,7 @@ check('Catalogue HR Automobiles : 38 véhicules, prix HT = TTC / 1,19, un plan d
 
 check('Plan du modèle : palier, distribution par chaîne et prix de la vidange', () => {
   const vw = hr('PASSAT');
-  assert.ok(vw.r.smrPlan.milestones.every(m => m.milestoneKm % 15000 === 0 || m.approxMonth % 12 === 0), 'paliers VW 15 000 km');
+  assert.ok(vw.r.smrPlan.milestones.every(m => m.milestoneKm % 10000 === 0), 'vidange à 10 000 km pour tous');
   const capt = hr('CAPTUR');
   const ops = capt.r.smrPlan.milestones.flatMap(m => m.items.map(x => x.opId));
   assert.ok(!ops.some(o => o.startsWith('kitCalage')), 'pas de kit de distribution sur moteur à chaîne');
