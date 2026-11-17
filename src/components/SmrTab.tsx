@@ -101,6 +101,11 @@ export function SmrTab() {
                   ⚠ Coûts ESTIMÉS (aucun forfait concessionnaire publié en Algérie), construits sur le barème TALHA AUTO : {plan.note} À confirmer par devis du prestataire SAV.
                 </p>
               )}
+              {plan?.source && (
+                <p className="text-[9.5px] mt-1 px-2 py-1 rounded bg-[#27ae7a14] border border-[#27ae7a40] text-[#6fd3a5]">
+                  ✓ {plan.source}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">

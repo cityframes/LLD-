@@ -107,7 +107,7 @@ export function Catalog() {
               <div className="flex items-center gap-2 bg-[#e0a04a12] border border-[#e0a04a2e] rounded-md p-2 px-3 mt-2">
                 <span className="text-[16px]">🔧</span>
                 <div className="text-[11px] text-[var(--color-txt2)] flex-1">
-                  Plan d'entretien <strong>{PLANS_ENTRETIEN[v.entretien].label}</strong> : révision tous les {fmt(PLANS_ENTRETIEN[v.entretien].palierKm)} km ou {PLANS_ENTRETIEN[v.entretien].palierMois} mois <span className="text-[#e8aa60]">(coûts estimés)</span>
+                  Plan d'entretien <strong>{PLANS_ENTRETIEN[v.entretien].label}</strong> : révision tous les {fmt(PLANS_ENTRETIEN[v.entretien].palierKm)} km ou {PLANS_ENTRETIEN[v.entretien].palierMois} mois <span className="text-[#e8aa60]">({PLANS_ENTRETIEN[v.entretien].source ? 'intervalles du constructeur, coûts estimés' : 'coûts estimés'})</span>
                 </div>
               </div>
             )}

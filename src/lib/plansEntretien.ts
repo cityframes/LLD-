@@ -31,6 +31,10 @@ export interface PlanEntretien {
   coefPieces: number;     // coefficient appliqué aux autres pièces du barème TALHA
   distribution: Distribution;
   note: string;           // hypothèses et sources
+  /** Intervalles d'opérations fournis par le constructeur (remplacent ceux du barème TALHA) */
+  intervalles?: Record<string, { km: number; mois: number }>;
+  /** Ce qui est sourcé (document reçu) ; le reste est estimé */
+  source?: string;
 }
 
 export const TAUX_REFERENCE = 1347.89;
@@ -57,10 +61,19 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
     note: 'Utilitaire chinois : vidange tous les 5 000 km ou 6 mois. Pièces moins chères que le barème Stellantis.',
   }),
   bmw: P({
-    id: 'bmw', label: 'BMW essence turbo (X3, Série 3, Série 5)',
-    palierKm: 15000, palierMois: 12, huileL: 5.25, prixHuileL: 3200, filtreHuile: 3500,
+    id: 'bmw', label: 'BMW B48 essence turbo (X3 G45, 320i G20, 520i G60)',
+    palierKm: 12000, palierMois: 12, huileL: 5.25, prixHuileL: 3200, filtreHuile: 3500,
     tauxHoraire: 3500, coefPieces: 2.8, distribution: { type: 'chaine' },
-    note: 'Entretien BMW selon l\'indicateur de service (environ 1 an), plafonné à 15 000 km pour les conditions algériennes. Huile BMW Longlife, pièces importées.',
+    intervalles: {
+      filtreHabitacle: { km: 24000, mois: 24 },   // microfiltre : tous les 2 services huile
+      filtreAir: { km: 60000, mois: 60 },         // tous les 5 services huile
+      bougiesAllumage: { km: 48000, mois: 999 },  // au kilométrage seulement
+      liquideFrein: { km: 999999, mois: 36 },     // 1er à 36 mois, puis tous les 24 mois
+      filtreEssence: { km: 999999, mois: 999 },   // filtre à carburant prévu pour le diesel seulement
+      liquideRefroid: { km: 999999, mois: 999 },  // pas de remplacement au plan constructeur
+    },
+    source: 'Intervalles sourcés : fiches BMW AIR du prestataire (15 et 17/11/2026). Option 08KM « vidange huile 12 000 km / 12 mois » des 320i et 520i livrés par Best Motor Wagen (Chéraga) ; plan BMW SA8KM : microfiltre 24 000 km / 24 mois, bougies 48 000 km, filtre à air et examen du véhicule 60 000 km / 60 mois, liquide de frein à 36 mois puis tous les 24 mois, filtre à carburant pour le diesel seulement, plaquettes selon le capteur d\'usure (rythme du barème TALHA conservé).',
+    note: 'Prix estimés (aucun tarif reçu) : huile BMW Longlife 5,25 L, pièces importées (× 2,8), main-d\'œuvre 3 500 DA/h. Le X3 G45 est supposé avoir la même option 08KM que les 320i et 520i. Moteur B48 2.0 L selon les fiches, alors que le tarif HR indique 1.6.',
   }),
   psa_diesel_20: P({
     id: 'psa_diesel_20', label: 'Peugeot / Citroën 2.0 HDi 150 (Traveller, Jumpy)',

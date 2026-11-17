@@ -679,6 +679,11 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
       return { ...op, intervalKm: plan.distribution.km, intervalAns: plan.distribution.ans || op.intervalAns,
         severeKm: undefined, severeAns: undefined, partPrice: op.partPrice * plan.coefPieces };
     }
+    const iv = plan.intervalles?.[op.id];
+    if (iv) {
+      return { ...op, intervalKm: iv.km, intervalAns: iv.mois / 12, severeKm: undefined, severeAns: undefined,
+        partPrice: op.partPrice * plan.coefPieces };
+    }
     return { ...op, partPrice: op.partPrice * plan.coefPieces };
   });
 
@@ -713,6 +718,7 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
     const month = Math.min(dureeMois, Math.max(1, Math.round(((mKm - kmActuel) / kmTotal) * dureeMois)));
     if (!events.has(month)) events.set(month, mKm);
   }
+  const kmEventMonths = new Set(events.keys());
   for (let month = stepMois; month < dureeMois; month += stepMois) {
     if (!events.has(month)) events.set(month, Math.round(kmActuel + kmTotal * month / dureeMois));
   }
@@ -731,11 +737,12 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
       const yearsSinceLast = monthsSinceLast / 12;
 
       // Déclenchement par kilométrage OU par temps révolu
-      const triggerKm = intervalKm < 999999 && kmSinceLast >= intervalKm - tolKm; // tolérance
+      const triggerKm = intervalKm < 999999 && kmSinceLast >= intervalKm - (kmEventMonths.has(approxMonth) ? tolKm : 500); // tolérance (demi-palier aux paliers km seulement)
       const triggerTime = intervalAns > 0 && yearsSinceLast >= intervalAns - 0.1;
 
       // Cas spécial liquide de frein : tous les 2 ans
-      const triggerSpecial = op.id === 'liquideFrein' && yearsSinceLast >= 2;
+      // (sauf si le plan du constructeur fixe sa propre échéance)
+      const triggerSpecial = op.id === 'liquideFrein' && !plan?.intervalles?.liquideFrein && yearsSinceLast >= 2;
 
       if (triggerKm || triggerTime || triggerSpecial) {
         const partPrice = cfg.customPrices && cfg.customPrices[op.id] !== undefined
