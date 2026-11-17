@@ -291,12 +291,12 @@ check('Le plan d\'entretien du modèle entre dans le loyer', () => {
   assert.ok(run().r.planEntretien === undefined, 'catalogue Fiat : barème TALHA inchangé');
 });
 
-check('BMW : intervalles des fiches constructeur (vidange 12 000 km, microfiltre 24 000 km, bougies 48 000 km)', () => {
+check('BMW : vidange 10 000 km (choix banque) et intervalles des fiches constructeur', () => {
   const b = hr('320I');
   const at = (op: string) => b.r.smrPlan.milestones.filter(m => m.items.some(x => x.opId === op)).map(m => m.milestoneKm);
-  assert.deepEqual(b.r.smrPlan.milestones.map(m => m.milestoneKm).slice(0, 3), [12000, 24000, 36000]);
-  assert.deepEqual(at('filtreHabitacle'), [24000, 48000, 72000, 96000, 120000]);
-  assert.deepEqual(at('bougiesAllumage'), [48000, 96000]);
+  assert.deepEqual(b.r.smrPlan.milestones.map(m => m.milestoneKm).slice(0, 3), [10000, 20000, 30000]);
+  assert.deepEqual(at('filtreHabitacle'), [20000, 40000, 60000, 80000, 100000, 120000], 'microfiltre 24 000 km : tous les 2 services');
+  assert.deepEqual(at('bougiesAllumage'), [50000, 100000], 'bougies 48 000 km : au service le plus proche');
   assert.deepEqual(at('filtreAir'), [60000, 120000]);
   assert.equal(b.r.smrPlan.milestones.filter(m => m.items.some(x => x.opId === 'liquideFrein')).map(m => m.approxMonth)[0], 36);
 });

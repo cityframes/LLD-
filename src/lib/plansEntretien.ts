@@ -62,7 +62,8 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
   }),
   bmw: P({
     id: 'bmw', label: 'BMW B48 essence turbo (X3 G45, 320i G20, 520i G60)',
-    palierKm: 12000, palierMois: 12, huileL: 5.25, prixHuileL: 3200, filtreHuile: 3500,
+    // Vidange à 10 000 km : choix de la banque (Yazid, 17/11/2026), plus prudent que les 12 000 km du constructeur
+    palierKm: 10000, palierMois: 12, huileL: 5.25, prixHuileL: 3200, filtreHuile: 3500,
     tauxHoraire: 3500, coefPieces: 2.8, distribution: { type: 'chaine' },
     intervalles: {
       filtreHabitacle: { km: 24000, mois: 24 },   // microfiltre : tous les 2 services huile
@@ -72,7 +73,7 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
       filtreEssence: { km: 999999, mois: 999 },   // filtre à carburant prévu pour le diesel seulement
       liquideRefroid: { km: 999999, mois: 999 },  // pas de remplacement au plan constructeur
     },
-    source: 'Intervalles sourcés : fiches BMW AIR du prestataire (15 et 17/11/2026). Option 08KM « vidange huile 12 000 km / 12 mois » des 320i et 520i livrés par Best Motor Wagen (Chéraga) ; plan BMW SA8KM : microfiltre 24 000 km / 24 mois, bougies 48 000 km, filtre à air et examen du véhicule 60 000 km / 60 mois, liquide de frein à 36 mois puis tous les 24 mois, filtre à carburant pour le diesel seulement, plaquettes selon le capteur d\'usure (rythme du barème TALHA conservé).',
+    source: 'Intervalles sourcés : fiches BMW AIR du prestataire (15 et 17/11/2026). Option 08KM « vidange huile 12 000 km / 12 mois » des 320i et 520i livrés par Best Motor Wagen (Chéraga), ramenée à 10 000 km par choix de la banque ; plan BMW SA8KM : microfiltre 24 000 km / 24 mois, bougies 48 000 km, filtre à air et examen du véhicule 60 000 km / 60 mois, liquide de frein à 36 mois puis tous les 24 mois, filtre à carburant pour le diesel seulement, plaquettes selon le capteur d\'usure (rythme du barème TALHA conservé).',
     note: 'Prix estimés (aucun tarif reçu) : huile BMW Longlife 5,25 L, pièces importées (× 2,8), main-d\'œuvre 3 500 DA/h. Le X3 G45 est supposé avoir la même option 08KM que les 320i et 520i. Moteur B48 2.0 L selon les fiches, alors que le tarif HR indique 1.6.',
   }),
   psa_diesel_20: P({
