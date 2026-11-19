@@ -90,7 +90,6 @@ export function Catalog() {
               <div>
                 <div className="text-[8.5px] uppercase tracking-[1px] text-[var(--color-txt3)] mb-0.5">Prix Acquisition HT</div>
                 <div className="font-jetbrains text-[12px] font-bold text-[var(--color-gold-l)]">{fDZA(v.prix)}</div>
-                {v.prix_ttc && <div className="text-[9px] text-[var(--color-txt3)]">Tarif {fDZA(v.prix_ttc)} TTC</div>}
               </div>
             </div>
             

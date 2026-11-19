@@ -262,12 +262,12 @@ const hr = (model: string) => {
   return { i, v: CATALOG[i], ...run({ veh_idx: i, p_achat: CATALOG[i].prix, smr_engine_type: CATALOG[i].fuel! }) };
 };
 
-check('Catalogue HR Automobiles : 38 véhicules, prix HT = TTC / 1,19, un plan d\'entretien chacun', () => {
+check('Catalogue HR Automobiles : 38 véhicules, prix HT du tarif, un plan d\'entretien chacun', () => {
   const list = CATALOG.filter(v => v.source === 'HR Automobiles · nov. 2026');
   assert.equal(list.length, 38);
   Object.values(PLANS_ENTRETIEN).forEach(p => assert.equal(p.palierKm, 10000, `${p.id} : vidange 10 000 km`));
   list.forEach(v => {
-    near(v.prix, v.prix_ttc! / 1.19, 0.5, v.model);
+    near(v.prime_ttc, 10155 + 0.01125 * v.prix, 0.01, `prime ${v.model}`);
     assert.ok(PLANS_ENTRETIEN[v.entretien!], `plan ${v.entretien} de ${v.model}`);
   });
   assert.equal(CATALOG[2].model, 'DOBLO PANORAMA club', 'les numéros des anciens véhicules ne bougent pas');
