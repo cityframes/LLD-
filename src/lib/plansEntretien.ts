@@ -59,9 +59,9 @@ export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
   }),
   dfsk_10: P({
     id: 'dfsk_10', label: 'DFSK 1.0 essence (minibus)',
-    palierKm: 10000, palierMois: 6, huileL: 3.0, prixHuileL: 1300, filtreHuile: 900,
+    palierKm: 10000, palierMois: 12, huileL: 3.0, prixHuileL: 1300, filtreHuile: 900,
     tauxHoraire: 1300, coefPieces: 0.7, distribution: { type: 'chaine' },
-    note: 'Utilitaire chinois : le constructeur prévoit 5 000 km ou 6 mois ; règle banque 10 000 km, échéance de 6 mois conservée. Pièces moins chères que le barème Stellantis.',
+    note: 'Utilitaire chinois : le constructeur prévoit 5 000 km ou 6 mois ; règle banque 10 000 km, échéance de 12 mois (choix de la banque, Yazid 19/11/2026). Pièces moins chères que le barème Stellantis.',
   }),
   bmw: P({
     id: 'bmw', label: 'BMW B48 essence turbo (X3 G45, 320i G20, 520i G60)',
