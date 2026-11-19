@@ -38,7 +38,7 @@ export const kmAnOf = (p: SimulatorParams) => Math.round(p.p_km / p.p_duree * 12
 /** Applique des changements ; une nouvelle durée ou un nouveau kilométrage ajuste la VR (pente de la grille d'options). */
 export function applyChanges(params: SimulatorParams, c: Changes): SimulatorParams {
   const num = (v: unknown) => (typeof v === 'number' && isFinite(v) ? v : undefined);
-  const duree = num(c.duree) ? Math.min(84, Math.max(12, Math.round(c.duree!))) : params.p_duree;
+  const duree = num(c.duree) ? Math.min(59, Math.max(12, Math.round(c.duree!))) : params.p_duree;
   const kmAn = num(c.km_an) ? Math.min(100000, Math.max(5000, Math.round(c.km_an!))) : kmAnOf(params);
   const p: SimulatorParams = { ...params, p_duree: duree, p_km: Math.round(kmAn * duree / 12) };
   p.p_vr_pct = num(c.vr_pct) ?? (duree !== params.p_duree || kmAn !== kmAnOf(params) ? adjustedVrPct(params, duree, kmAn) : params.p_vr_pct);
@@ -162,10 +162,10 @@ ${offerContext(params)}
 Effet de chaque levier pris seul :
 ${table}
 
-${tools ? 'Utilise l\'outil simulate pour tester des combinaisons de leviers (au plus 6 essais) et trouve' : 'À partir de ces effets, propose'} 2 ou 3 options qui répondent au mieux à la demande en préservant la rentabilité : privilégie les options qui restent dans la délégation (ROE au-dessus de la cible) ; une baisse de marge est le dernier levier. Leviers possibles : duree (mois, 24 à 60), km_an, apport (DA), vr_pct, marge (%/an), sans_remplacement, sans_assistance, sans_mobilite.
+${tools ? 'Utilise l\'outil simulate pour tester des combinaisons de leviers (au plus 6 essais) et trouve' : 'À partir de ces effets, propose'} 2 ou 3 options qui répondent au mieux à la demande en préservant la rentabilité : privilégie les options qui restent dans la délégation (ROE au-dessus de la cible) ; une baisse de marge est le dernier levier. Leviers possibles : duree (mois, 24 à 59), km_an, apport (DA), vr_pct, marge (%/an), sans_remplacement, sans_assistance, sans_mobilite.
 
 Réponds uniquement avec un objet JSON :
-{"analyse": "2 ou 3 phrases en français sur ce que demande le client et la marge de manœuvre", "options": [{"titre": "titre court", "changes": {"duree": 60}, "argument": "1 ou 2 phrases à dire au client"}]}
+{"analyse": "2 ou 3 phrases en français sur ce que demande le client et la marge de manœuvre", "options": [{"titre": "titre court", "changes": {"duree": 48}, "argument": "1 ou 2 phrases à dire au client"}]}
 Dans "changes", ne mets que les leviers modifiés, avec les valeurs finales (pas des écarts).`;
 }
 

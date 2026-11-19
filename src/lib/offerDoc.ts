@@ -102,7 +102,6 @@ function servicesList(p: SimulatorParams, lang: Lang): string[] {
   if (p.c_pneu > 0) s.push(fr ? 'Remplacement des pneumatiques selon l\'usure' : 'استبدال الإطارات حسب الاهتراء');
   s.push(fr ? 'Takaful dommages et responsabilité civile' : 'التكافل ضد الأضرار والمسؤولية المدنية');
   if (p.p_vignette > 0) s.push(fr ? 'Vignette automobile' : 'قسيمة السيارات');
-  if (p.c_ct > 0) s.push(fr ? 'Contrôle technique périodique' : 'الفحص التقني الدوري');
   if (p.c_assistance > 0) s.push(fr ? 'Assistance et remorquage 24 h/24' : 'المساعدة وسحب المركبة على مدار الساعة');
   if (p.c_veh_d > 0 && p.c_veh_j > 0) s.push(fr ? 'Véhicule de remplacement' : 'سيارة بديلة');
   if (p.c_mob > 0) s.push(fr ? 'Mobilité et télématique' : 'خدمات التنقل والتتبع');
