@@ -51,7 +51,7 @@ export function ResultsPanel() {
         </Block>
 
         <Block id="se" name="Services & Entretien SMR" icon="🔧" color="var(--color-orange)" bg="rgba(212,136,42,.07)" border="rgba(212,136,42,.12)" monthly={engineResult.blocSe} total={engineResult.blocSe * d} open={openBlocks.se} onToggle={() => toggleBlock('se')}>
-          <Row label="Entretien Mécanique Constructeur (10 000 km)" val={engineResult.provSMR} />
+          <Row label={engineResult.planEntretien ? `Entretien constructeur (${engineResult.planEntretien.palierKm.toLocaleString('fr-FR')} km · estimé)` : "Entretien Mécanique Constructeur (10 000 km)"} val={engineResult.provSMR} />
           {engineResult.provAleasM > 0 && <Row label={`Provision Aléas & Imprévus (${params.smr_aleas || 10}%)`} val={engineResult.provAleasM} color="#c084e8" />}
           <Row label="Provision Pneumatiques" val={engineResult.provPneu} />
           <Row label={`Marge Entretien mécanique (${params.p_smr_margin}%)`} val={engineResult.smrMkupM} />

@@ -16,6 +16,9 @@ export function SmrTab() {
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
 
   const smrPlan = engineResult.smrPlan;
+  const plan = engineResult.planEntretien;
+  const palierKm = plan ? plan.palierKm : 10000;
+  const palierTxt = `${fmt(palierKm)} km`;
 
   const handleUpdate = (key: any, value: any) => {
     dispatch({ type: 'SET_PARAM', payload: { key, value } });
@@ -72,9 +75,9 @@ export function SmrTab() {
           color="#c084e8"
         />
         <KpiCard 
-          label="Paliers 10 000 KM" 
+          label={`Paliers ${palierTxt}`} 
           val={`${smrPlan.milestones.length} révisions`} 
-          sub={`Tous les 10 000 km`}
+          sub={plan ? `Tous les ${palierTxt} ou ${plan.palierMois} mois` : `Tous les 10 000 km`}
           color="var(--color-green)"
         />
       </div>
@@ -86,11 +89,23 @@ export function SmrTab() {
             <span className="text-[18px]">🔧</span>
             <div>
               <h2 className="text-[13px] font-bold text-[var(--color-gold-l)] uppercase tracking-[1px]">
-                Paramètres du Plan d'Entretien Programmé (Barème TALHA AUTO / Stellantis)
+                Paramètres du Plan d'Entretien Programmé ({plan ? plan.label : 'Barème TALHA AUTO / Stellantis'})
               </h2>
               <p className="text-[9.5px] text-[var(--color-txt3)]">
-                Intervalles de révision calibrés tous les 10 000 km selon les préconisations constructeur en Algérie.
+                {plan
+                  ? `Révision tous les ${palierTxt} ou ${plan.palierMois} mois · main-d'œuvre ${fmt(plan.tauxHoraire)} DA/h HT · pièces × ${plan.coefPieces} · distribution ${plan.distribution.type === 'chaine' ? 'par chaîne' : `courroie à ${fmt(plan.distribution.km || 0)} km`}`
+                  : 'Intervalles de révision calibrés tous les 10 000 km selon les préconisations constructeur en Algérie.'}
               </p>
+              {plan && (
+                <p className="text-[9.5px] mt-1 px-2 py-1 rounded bg-[#e0a04a1a] border border-[#e0a04a40] text-[#e8aa60]">
+                  ⚠ Coûts ESTIMÉS (aucun forfait concessionnaire publié en Algérie), construits sur le barème TALHA AUTO : {plan.note} À confirmer par devis du prestataire SAV.
+                </p>
+              )}
+              {plan?.source && (
+                <p className="text-[9.5px] mt-1 px-2 py-1 rounded bg-[#27ae7a14] border border-[#27ae7a40] text-[#6fd3a5]">
+                  ✓ {plan.source}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -256,7 +271,7 @@ export function SmrTab() {
       <div className="flex items-center justify-between border-b border-[var(--color-border-light)] pb-1">
         <div className="flex gap-2">
           <SubTabBtn active={subView === 'chronology'} onClick={() => setSubView('chronology')}>
-            🗓️ Calendrier des Paliers (Chaque 10 000 KM)
+            🗓️ Calendrier des Paliers (Chaque {palierTxt})
           </SubTabBtn>
           <SubTabBtn active={subView === 'annual'} onClick={() => setSubView('annual')}>
             📊 Lissage Annuel & Mensuel
@@ -348,7 +363,7 @@ export function SmrTab() {
           <div className="bg-[#0b1728] border border-[var(--color-border-light)] rounded-[8px] p-3 text-[10px] text-[var(--color-txt3)] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[var(--color-gold)]"></span> Révision standard 10 000 km
+                <span className="w-2 h-2 rounded-full bg-[var(--color-gold)]"></span> Révision standard {palierTxt}
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span> Grosse opération (Distribution/GPL)

@@ -144,7 +144,7 @@ export function Params() {
           <div className="flex items-center gap-2.5">
             <div className="w-[26px] h-[26px] rounded-[5px] flex items-center justify-center text-[13px] shrink-0 bg-[var(--color-orange-d)]">🔧</div>
             <div>
-              <div className="font-bold text-[11.5px] text-[var(--color-txt)]">Services & Entretien SMR (10 000 km)</div>
+              <div className="font-bold text-[11.5px] text-[var(--color-txt)]">Services & Entretien SMR ({engineResult.planEntretien ? `${engineResult.planEntretien.palierKm.toLocaleString('fr-FR')} km · plan du modèle` : '10 000 km'})</div>
               <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[0.7px] mt-0.5">Barème Stellantis · TALHA AUTO · Pneus · Flotte</div>
             </div>
           </div>

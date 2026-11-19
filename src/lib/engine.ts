@@ -1,6 +1,7 @@
 import { CATALOG, SimulatorParams, TVA, V11_PROFILES } from "./types";
 import { irr, npv, pmt, r2m } from "./utils";
 import { computeDetailedSmrPlan, SmrSimulationResult } from "./smrCatalog";
+import { PLANS_ENTRETIEN } from "./plansEntretien";
 
 export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const duree = customDuree || params.p_duree;
@@ -29,7 +30,11 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   const smrMkup = (params.p_smr_margin ?? 10) / 100;
   const inflAnn = params.p_inflation ?? 5.0;
 
-  // Calcul du plan d'entretien détaillé 10 000 km Stellantis / TALHA AUTO
+  // Plan d'entretien du modèle choisi au catalogue (sinon barème TALHA AUTO 10 000 km)
+  const veh = params.veh_idx >= 0 ? CATALOG[params.veh_idx] : undefined;
+  const planEntretien = veh?.entretien ? PLANS_ENTRETIEN[veh.entretien] : undefined;
+
+  // Calcul du plan d'entretien détaillé
   const smrPlan: SmrSimulationResult = computeDetailedSmrPlan({
     dureeMois: duree,
     kmTotal: kmTotal,
@@ -44,6 +49,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
     tauxTva: 19,
     customPrices: params.smr_custom_prices,
     customHours: params.smr_custom_hours,
+    plan: planEntretien,
   });
 
   // Calcul pneumatiques
@@ -196,7 +202,7 @@ export function computeEngine(params: SimulatorParams, customDuree?: number) {
   }
 
   return {
-    achat, achatNet, remiseFour, portage, delai, echoir, fraisDossier, vrDecote, coutKm, inflServ,
+    planEntretien, achat, achatNet, remiseFour, portage, delai, echoir, fraisDossier, vrDecote, coutKm, inflServ,
     capex, apport, depot, depotRessource: !!params.p_depot_ressource, vrBrute, vrNette, vrBruteTTC, vrNetteTTC, vrFrais, vrNegative,
     waccAnn, waccM, rateLocAnn, rateLocM, besoin, duree, kmTotal,
     pmtFin, amortM_avg, revM_avg, riskM, admin, blocFi, sumLGD,

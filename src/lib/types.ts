@@ -184,6 +184,10 @@ export interface Vehicle {
   prix: number;
   prime_ttc: number;
   fuel?: 'diesel' | 'essence' | 'gpl';
+  prix_ttc?: number;          // prix du tarif fournisseur (TTC)
+  prime_estimee?: boolean;    // prime Takaful estimée (pas de cotation de l'assureur)
+  entretien?: string;         // plan d'entretien (clé de PLANS_ENTRETIEN)
+  source?: string;            // tarif d'origine
 }
 
 export const CATALOG: Vehicle[] = [
@@ -198,6 +202,48 @@ export const CATALOG: Vehicle[] = [
   { model: 'ASTRA', version: '1,2 Turbo', cv: '07 CV', prix: 4659000, prime_ttc: 62540.51, fuel: 'essence' },
   { model: 'MOKKA', version: '1,2 Turbo', cv: '07 CV', prix: 4209000, prime_ttc: 57599.44, fuel: 'essence' },
   { model: 'GRANDLAND', version: '1,5 Diesel', cv: '09 CV', prix: 4729000, prime_ttc: 63309.12, fuel: 'diesel' },
+  // Tarif HR Automobiles, novembre 2026 (année modèle 2026). Prix HT = prix TTC du tarif / 1,19.
+  // Prime Takaful estimée par régression sur les primes du catalogue Fiat ci-dessus
+  // (10 155 DA + 1,125 % du prix HT) : à remplacer par la cotation de l'assureur.
+  // Ajoutés à la fin pour garder les numéros des véhicules des cotations existantes.
+  { model: 'RENAULT CAPTUR ALPINE', version: '1.3 TCE 155ch · BVA', cv: '—', prix: 6974790, prix_ttc: 8300000, prime_ttc: 88604.12, prime_estimee: true, fuel: 'essence', entretien: 'renault_tce', source: 'HR Automobiles · nov. 2026' },
+  { model: 'RENAULT CLIO 5 ALPINE', version: '1.5 DCI 115ch · BVM', cv: '—', prix: 5630252, prix_ttc: 6700000, prime_ttc: 73481.33, prime_estimee: true, fuel: 'diesel', entretien: 'renault_dci15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'RENAULT CLIO 5 ALPINE', version: '1.0 TCE 90ch · BVA', cv: '—', prix: 5588235, prix_ttc: 6650000, prime_ttc: 73008.74, prime_estimee: true, fuel: 'essence', entretien: 'renault_tce', source: 'HR Automobiles · nov. 2026' },
+  { model: 'DACIA DUSTER EXTREME GOLD', version: '1.3 TCE 150ch · BVA', cv: '—', prix: 6050420, prix_ttc: 7200000, prime_ttc: 78207.2, prime_estimee: true, fuel: 'essence', entretien: 'renault_tce', source: 'HR Automobiles · nov. 2026' },
+  { model: 'DACIA LOGAN', version: '1.0 TCe 110 ch · BVM', cv: '—', prix: 4201681, prix_ttc: 5000000, prime_ttc: 57413.38, prime_estimee: true, fuel: 'essence', entretien: 'renault_tce', source: 'HR Automobiles · nov. 2026' },
+  { model: 'DFSK MINI BUS 7 PLACES', version: '1.0 Essence 58ch · BVM', cv: '—', prix: 3025210, prix_ttc: 3600000, prime_ttc: 44180.94, prime_estimee: true, fuel: 'essence', entretien: 'dfsk_10', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW X3 PACK 1', version: '1.6 Essence 193ch · BVA', cv: '—', prix: 17134454, prix_ttc: 20390000, prime_ttc: 202875.66, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW X3 PACK 1 *', version: '1.6 Essence 193ch · BVA', cv: '—', prix: 16344538, prix_ttc: 19450000, prime_ttc: 193991.03, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW X3 PACK 2', version: '1.6 Essence 193ch · BVA', cv: '—', prix: 15924370, prix_ttc: 18950000, prime_ttc: 189265.16, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW 320I PACK 1', version: '1.6 Essence 190ch · BVA', cv: '—', prix: 16596639, prix_ttc: 19750000, prime_ttc: 196826.55, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW 520I PACK 1', version: '1.6 Essence 197ch · BVA', cv: '—', prix: 19201681, prix_ttc: 22850000, prime_ttc: 226126.95, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW 520I PACK 2', version: '1.6 Essence 197ch · BVA', cv: '—', prix: 17084034, prix_ttc: 20330000, prime_ttc: 202308.56, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
+  { model: 'PEUGEOT TRAVELLER 9 PLACES', version: '2.0 HDI 150ch · BVA', cv: '—', prix: 9411765, prix_ttc: 11200000, prime_ttc: 116014.17, prime_estimee: true, fuel: 'diesel', entretien: 'psa_diesel_20', source: 'HR Automobiles · nov. 2026' },
+  { model: 'PEUGEOT TRAVELLER 9 PLACES', version: '2.0 HDI 150ch · BVM', cv: '—', prix: 8697479, prix_ttc: 10350000, prime_ttc: 107980.19, prime_estimee: true, fuel: 'diesel', entretien: 'psa_diesel_20', source: 'HR Automobiles · nov. 2026' },
+  { model: 'PEUGEOT 3008 GT', version: '1.6 Essence 180ch · BVA', cv: '—', prix: 10084034, prix_ttc: 12000000, prime_ttc: 123575.56, prime_estimee: true, fuel: 'essence', entretien: 'psa_essence_16', source: 'HR Automobiles · nov. 2026' },
+  { model: 'PEUGEOT RIFTER GT', version: '1.6 HDi 92 ch · BVM', cv: '—', prix: 7563025, prix_ttc: 9000000, prime_ttc: 95220.34, prime_estimee: true, fuel: 'diesel', entretien: 'psa_diesel_16', source: 'HR Automobiles · nov. 2026' },
+  { model: 'GEELY COOLRAY FULL OPTION', version: '1.5T 180ch · BVA', cv: '—', prix: 4369748, prix_ttc: 5200000, prime_ttc: 59303.73, prime_estimee: true, fuel: 'essence', entretien: 'geely_15t', source: 'HR Automobiles · nov. 2026' },
+  { model: 'GEELY BATTLE', version: '1.5T 181 ch · BVA', cv: '—', prix: 4453782, prix_ttc: 5300000, prime_ttc: 60248.9, prime_estimee: true, fuel: 'essence', entretien: 'geely_15t', source: 'HR Automobiles · nov. 2026' },
+  { model: 'ROEWE I5', version: '1.5 129 ch · BVA', cv: '—', prix: 3025210, prix_ttc: 3600000, prime_ttc: 44180.94, prime_estimee: true, fuel: 'essence', entretien: 'chinois_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN PASSAT PRO', version: '1.5 TSI 160ch · BVA', cv: '—', prix: 7310924, prix_ttc: 8700000, prime_ttc: 92384.81, prime_estimee: true, fuel: 'essence', entretien: 'vw_tsi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN T-ROC R LINE', version: '1.5 TSI 160ch · BVA', cv: '—', prix: 6386555, prix_ttc: 7600000, prime_ttc: 81987.91, prime_estimee: true, fuel: 'essence', entretien: 'vw_tsi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN GOLF 8.5', version: '1.5 TSI 160 ch · BVA', cv: '—', prix: 7436975, prix_ttc: 8850000, prime_ttc: 93802.58, prime_estimee: true, fuel: 'essence', entretien: 'vw_tsi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN LAVIDA', version: '1.5 MPI 115 ch · BVA', cv: '—', prix: 4411765, prix_ttc: 5250000, prime_ttc: 59776.31, prime_estimee: true, fuel: 'essence', entretien: 'vw_mpi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN POLO', version: '1.5 MPI · BVA', cv: '—', prix: 4957983, prix_ttc: 5900000, prime_ttc: 65919.94, prime_estimee: true, fuel: 'essence', entretien: 'vw_mpi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'VOLKSWAGEN THARU XR', version: '1.5T 160 ch · BVA', cv: '—', prix: 5613445, prix_ttc: 6680000, prime_ttc: 73292.3, prime_estimee: true, fuel: 'essence', entretien: 'vw_tsi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'KIA K3', version: '1.5 115ch · BVA', cv: '—', prix: 4495798, prix_ttc: 5350000, prime_ttc: 60721.48, prime_estimee: true, fuel: 'essence', entretien: 'hyundai_kia_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'HYUNDAI ELANTRA', version: '1.5 115ch · BVA', cv: '—', prix: 4327731, prix_ttc: 5150000, prime_ttc: 58831.14, prime_estimee: true, fuel: 'essence', entretien: 'hyundai_kia_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'AUDI Q3', version: '1.5T 160 ch 35 TFSI · BVA', cv: '—', prix: 8907563, prix_ttc: 10600000, prime_ttc: 110343.12, prime_estimee: true, fuel: 'essence', entretien: 'audi_tfsi', source: 'HR Automobiles · nov. 2026' },
+  { model: 'JETOUR X70 PLUS', version: '1.6 197ch · BVA', cv: '—', prix: 7478992, prix_ttc: 8900000, prime_ttc: 94275.17, prime_estimee: true, fuel: 'essence', entretien: 'jetour_16t', source: 'HR Automobiles · nov. 2026' },
+  { model: 'FIAT 500X CLUB', version: '1.4 Essence · BVA', cv: '—', prix: 4537815, prix_ttc: 5400000, prime_ttc: 61194.07, prime_estimee: true, fuel: 'essence', entretien: 'fiat_14', source: 'HR Automobiles · nov. 2026' },
+  { model: 'FIAT TIPO', version: '1.4 Essence · BVM', cv: '—', prix: 4369748, prix_ttc: 5200000, prime_ttc: 59303.73, prime_estimee: true, fuel: 'essence', entretien: 'fiat_14', source: 'HR Automobiles · nov. 2026' },
+  { model: 'CITROEN BERLINGO XTR', version: '1.6 HDI 92ch · BVM', cv: '—', prix: 7436975, prix_ttc: 8850000, prime_ttc: 93802.58, prime_estimee: true, fuel: 'diesel', entretien: 'psa_diesel_16', source: 'HR Automobiles · nov. 2026' },
+  { model: 'CITROEN JUMPY 8 PLACES', version: '2.0 HDI 150ch · BVA', cv: '—', prix: 8991597, prix_ttc: 10700000, prime_ttc: 111288.3, prime_estimee: true, fuel: 'diesel', entretien: 'psa_diesel_20', source: 'HR Automobiles · nov. 2026' },
+  { model: 'LIVAN X3 PRO', version: '1.5 113ch · BVA', cv: '—', prix: 3277311, prix_ttc: 3900000, prime_ttc: 47016.46, prime_estimee: true, fuel: 'essence', entretien: 'chinois_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'LIVAN X3 PRO', version: '1.5 113 ch · BVM', cv: '—', prix: 3193277, prix_ttc: 3800000, prime_ttc: 46071.28, prime_estimee: true, fuel: 'essence', entretien: 'chinois_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'MG MG5 COMFORT', version: '1.5 Essence 128ch · BVM', cv: '—', prix: 3109244, prix_ttc: 3700000, prime_ttc: 45126.12, prime_estimee: true, fuel: 'essence', entretien: 'chinois_15', source: 'HR Automobiles · nov. 2026' },
+  { model: 'TOYOTA COROLLA', version: '1.2T 130 ch · BVA', cv: '—', prix: 5042017, prix_ttc: 6000000, prime_ttc: 66865.12, prime_estimee: true, fuel: 'essence', entretien: 'toyota_12t', source: 'HR Automobiles · nov. 2026' },
+  { model: 'BMW 520I PACK 1 *', version: '1.6 Essence 197ch · BVA', cv: '—', prix: 17789916, prix_ttc: 21170000, prime_ttc: 210248.02, prime_estimee: true, fuel: 'essence', entretien: 'bmw', source: 'HR Automobiles · nov. 2026' },
 ];
 
 export const V11_PROFILES: Record<string, any> = {

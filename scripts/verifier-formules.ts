@@ -3,7 +3,8 @@
  * Lancer : npm test
  */
 import assert from 'node:assert/strict';
-import { DEFAULTS, SimulatorParams } from '../src/lib/types';
+import { DEFAULTS, SimulatorParams, CATALOG } from '../src/lib/types';
+import { PLANS_ENTRETIEN } from '../src/lib/plansEntretien';
 import { computeEngine, computePnL, resiliationTable } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
 import { validationAlerts, canSubmit, nextRef, Cotation } from '../src/lib/team';
@@ -253,6 +254,52 @@ check('Résiliation : 6 loyers avant le 13e mois, puis barème des conditions g�
   const t = resiliationTable(r, [6, 24]);
   near(t[0].indemnite, 6 * r.loyerTTC, 0.01);
   near(t[1].indemnite, r.loyerTTC * 48 * 0.32 * 24 / 44, 0.01);
+});
+
+const hr = (model: string) => {
+  const i = CATALOG.findIndex(v => v.source && (v.model + ' ' + v.version).includes(model));
+  assert.ok(i >= 0, model);
+  return { i, v: CATALOG[i], ...run({ veh_idx: i, p_achat: CATALOG[i].prix, smr_engine_type: CATALOG[i].fuel! }) };
+};
+
+check('Catalogue HR Automobiles : 38 véhicules, prix HT = TTC / 1,19, un plan d\'entretien chacun', () => {
+  const list = CATALOG.filter(v => v.source === 'HR Automobiles · nov. 2026');
+  assert.equal(list.length, 38);
+  Object.values(PLANS_ENTRETIEN).forEach(p => assert.equal(p.palierKm, 10000, `${p.id} : vidange 10 000 km`));
+  list.forEach(v => {
+    near(v.prix, v.prix_ttc! / 1.19, 0.5, v.model);
+    assert.ok(PLANS_ENTRETIEN[v.entretien!], `plan ${v.entretien} de ${v.model}`);
+  });
+  assert.equal(CATALOG[2].model, 'DOBLO PANORAMA club', 'les numéros des anciens véhicules ne bougent pas');
+});
+
+check('Plan du modèle : palier, distribution par chaîne et prix de la vidange', () => {
+  const vw = hr('PASSAT');
+  assert.ok(vw.r.smrPlan.milestones.every(m => m.milestoneKm % 10000 === 0), 'vidange à 10 000 km pour tous');
+  const capt = hr('CAPTUR');
+  const ops = capt.r.smrPlan.milestones.flatMap(m => m.items.map(x => x.opId));
+  assert.ok(!ops.some(o => o.startsWith('kitCalage')), 'pas de kit de distribution sur moteur à chaîne');
+  const vid = capt.r.smrPlan.milestones[0].items.find(x => x.opId === 'vidangeEssence')!;
+  near(vid.partPrice, 4.5 * 1700 + 1500, 0.01);
+  const fiat = hr('TIPO');
+  assert.ok(fiat.r.smrPlan.milestones.flatMap(m => m.items).some(x => x.opId === 'kitCalagePompeEssence'), 'courroie Fiat à 60 000 km');
+});
+
+check('Le plan d\'entretien du modèle entre dans le loyer', () => {
+  const bmw = hr('520I PACK 2'), logan = hr('LOGAN');
+  assert.ok(bmw.r.provSMR > logan.r.provSMR * 1.5, 'BMW plus chère à entretenir');
+  near(bmw.r.provSMR, bmw.r.smrPlan.totalApresRemiseHT / bmw.r.duree, 0.01);
+  assert.ok(run().r.planEntretien === undefined, 'catalogue Fiat : barème TALHA inchangé');
+});
+
+check('BMW : vidange 10 000 km (choix banque) et intervalles des fiches constructeur', () => {
+  const b = hr('320I');
+  const at = (op: string) => b.r.smrPlan.milestones.filter(m => m.items.some(x => x.opId === op)).map(m => m.milestoneKm);
+  assert.deepEqual(b.r.smrPlan.milestones.map(m => m.milestoneKm).slice(0, 3), [10000, 20000, 30000]);
+  assert.deepEqual(at('filtreHabitacle'), [20000, 40000, 60000, 80000, 100000, 120000], 'microfiltre 24 000 km : tous les 2 services');
+  assert.deepEqual(at('bougiesAllumage'), [50000, 100000], 'bougies 48 000 km : au service le plus proche');
+  assert.deepEqual(at('filtreAir'), [60000, 120000]);
+  assert.equal(b.r.smrPlan.milestones.filter(m => m.items.some(x => x.opId === 'liquideFrein')).map(m => m.approxMonth)[0], 36);
 });
 
 console.log(`\n${ok} contrôle(s) réussi(s)`);
