@@ -2,6 +2,7 @@ import React from 'react';
 import { useStateContext } from '../Store';
 import { InputRow } from './ui/InputRow';
 import { fDZA, cn } from '../lib/utils';
+import { V11_PROFILES } from '../lib/types';
 
 export function Params() {
   const { params, dispatch, engineResult } = useStateContext();
@@ -10,8 +11,46 @@ export function Params() {
     dispatch({ type: 'SET_PARAM', payload: { key, value: parseFloat(value) || 0 } });
   };
 
+  const setBool = (key: string, value: boolean) => dispatch({ type: 'SET_PARAM', payload: { key: key as any, value } });
+  const r = engineResult;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+      {/* 0. LOT 5 : ÉLÉMENTS DE PRIX ET OPTIONS DE MÉTHODE */}
+      <div className="lg:col-span-2 bg-[var(--color-card)] border border-[var(--color-border-light)] rounded-[10px] overflow-hidden shadow-[0_3px_16px_rgba(0,0,0,0.28)]">
+        <div className="flex items-center gap-2.5 p-3 px-3.5 border-b border-[var(--color-border-light)] relative before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-[var(--color-green)]">
+          <div className="w-[26px] h-[26px] rounded-[5px] flex items-center justify-center text-[13px] shrink-0 bg-[var(--color-green-d)]">⚙️</div>
+          <div>
+            <div className="font-bold text-[11.5px] text-[var(--color-txt)]">Éléments de prix & options de méthode</div>
+            <div className="text-[9px] text-[var(--color-txt3)] uppercase tracking-[0.7px] mt-0.5">Frais de dossier · Remise concessionnaire · Portage · Terme · Dépôt · Décote VR · Indexation · Km sup.</div>
+          </div>
+        </div>
+        <div className="p-3 grid grid-cols-1 lg:grid-cols-2 gap-x-6">
+          <div>
+            <InputRow label="Frais de dossier" sub="HT, encaissés à la signature (revenu, loyer inchangé)" val={params.p_frais_dossier} suffix="DZA" onChange={v => handleNumChange('p_frais_dossier', v)} />
+            <InputRow label="Remise concessionnaire" sub={`Prix payé ${fDZA(r.achatNet)} · VR calculée sur le prix catalogue`} val={params.p_remise_fournisseur} suffix="%" step="0.5" min="0" max="50" onChange={v => handleNumChange('p_remise_fournisseur', v)} />
+            <InputRow label="Délai de livraison" sub={`Portage au coût des ressources : ${fDZA(r.portage)} ajoutés au montant financé`} val={params.p_delai_livraison} suffix="mois" step="0.5" min="0" onChange={v => handleNumChange('p_delai_livraison', v)} />
+            <div className="flex items-start justify-between py-1.5 border-b border-[var(--color-border-light)] gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="text-[11.5px] font-medium text-[var(--color-txt)]">Prix du km supplémentaire</div>
+                <div className="text-[9.5px] mt-0.5 text-[var(--color-txt3)]">Coût réel : {r.coutKm.toFixed(2)} DZA/km · loyer/km : {r.prk.toFixed(2)} DZA/km (× coef. {params.p_km_coef})</div>
+              </div>
+              <select value={params.p_km_mode} onChange={e => dispatch({ type: 'SET_PARAM', payload: { key: 'p_km_mode', value: e.target.value } })}
+                className="self-center bg-[var(--color-bg2)] border border-[var(--color-border-main)] rounded-md text-[var(--color-txt2)] text-[10px] py-1.5 px-2 outline-none">
+                <option value="loyer">Loyer HT / km</option>
+                <option value="cout">Coût réel / km</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <Toggle label="Loyer payé en début de mois (terme à échoir)" sub="Conditions générales : paiement au plus tard le 5 du mois" checked={params.p_terme_echoir} onChange={v => setBool('p_terme_echoir', v)} />
+            <Toggle label="Dépôt de garantie compté comme ressource" sub="Réduit le coût de refinancement · avis du comité charia requis" checked={params.p_depot_ressource} onChange={v => setBool('p_depot_ressource', v)} />
+            <Toggle label="Décote de VR du profil client appliquée au loyer" sub={`Profil actuel : −${Math.round((V11_PROFILES[params.v11_profile] || V11_PROFILES.standard).vrHaircut * 100)} % sur la VR`} checked={params.p_vr_decote_on} onChange={v => setBool('p_vr_decote_on', v)} />
+            <Toggle label="Services indexés sur l'inflation" sub="Véhicule de remplacement, assistance, mobilité, gestion" checked={params.p_infl_services} onChange={v => setBool('p_infl_services', v)} />
+          </div>
+        </div>
+      </div>
+
       {/* 1. IJARAH */}
       <div className="bg-[var(--color-card)] border border-[var(--color-border-light)] rounded-[10px] overflow-hidden shadow-[0_3px_16px_rgba(0,0,0,0.28)]">
         <div className="flex items-center gap-2.5 p-3 px-3.5 border-b border-[var(--color-border-light)] relative before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-[var(--color-blue)]">
@@ -24,7 +63,7 @@ export function Params() {
         <div className="p-3">
           <InputRow label="Prix d'Acquisition HT" sub="Auto-rempli par le catalogue ou saisie libre" val={params.p_achat} suffix="DZA" onChange={v => handleNumChange('p_achat', v)} />
           <InputRow label="Frais Immatriculation & Livraison" val={params.p_liv} suffix="DZA" onChange={v => handleNumChange('p_liv', v)} />
-          <InputRow label="Durée du Contrat Ijarah" val={params.p_duree} suffix="mois" min="12" max="84" onChange={v => handleNumChange('p_duree', v)} />
+          <InputRow label="Durée du Contrat Ijarah" val={params.p_duree} sub="59 mois au plus (conditions générales)" suffix="mois" min="12" max="59" onChange={v => handleNumChange('p_duree', v)} />
           <InputRow label="Kilométrage Contractuel Total" val={params.p_km} suffix="km" onChange={v => handleNumChange('p_km', v)} />
           
           <div className="h-[1px] bg-[var(--color-border-light)] my-2"></div>
@@ -237,5 +276,17 @@ export function Params() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Toggle({ label, sub, checked, onChange }: { label: string; sub?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-start justify-between py-1.5 border-b border-[var(--color-border-light)] gap-2 cursor-pointer">
+      <div className="flex-1 min-w-0">
+        <div className="text-[11.5px] font-medium text-[var(--color-txt)] leading-[1.3]">{label}</div>
+        {sub && <div className="text-[9.5px] mt-0.5 text-[var(--color-txt3)]">{sub}</div>}
+      </div>
+      <input type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)} className="self-center w-4 h-4 accent-[#39c98a]" />
+    </label>
   );
 }

@@ -79,6 +79,16 @@ export interface SimulatorParams {
   // V11
   v11_profile: string;
   v11_scenario: string;
+
+  // Lot 5 : éléments de prix et options de méthode (valeurs par défaut = calcul historique)
+  p_frais_dossier: number;        // Frais de dossier HT encaissés à la signature (DA)
+  p_remise_fournisseur: number;   // Remise du concessionnaire sur le prix d'achat (%)
+  p_delai_livraison: number;      // Mois entre le paiement du véhicule et sa livraison (portage)
+  p_terme_echoir: boolean;        // Loyer payé en début de mois (terme à échoir)
+  p_depot_ressource: boolean;     // Dépôt de garantie compté comme ressource gratuite
+  p_vr_decote_on: boolean;        // Décote de VR du profil client appliquée au loyer
+  p_infl_services: boolean;       // Services (remplacement, assistance, mobilité, gestion) indexés
+  p_km_mode: 'loyer' | 'cout';    // Prix du km sup. : loyer / km, ou coût réel / km
 }
 
 // Valeurs par défaut = contrat type du budget LLD 2027
@@ -155,7 +165,16 @@ export const DEFAULTS: SimulatorParams = {
   p_km_franchise: 1000,
 
   v11_profile: "standard",
-  v11_scenario: "base"
+  v11_scenario: "base",
+
+  p_frais_dossier: 0,
+  p_remise_fournisseur: 0,
+  p_delai_livraison: 0,
+  p_terme_echoir: false,
+  p_depot_ressource: false,
+  p_vr_decote_on: false,
+  p_infl_services: false,
+  p_km_mode: 'loyer'
 };
 
 export interface Vehicle {
