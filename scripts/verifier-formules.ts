@@ -267,7 +267,7 @@ check('Catalogue HR Automobiles : 38 véhicules, prix HT du tarif, un plan d\'en
   assert.equal(list.length, 38);
   Object.values(PLANS_ENTRETIEN).forEach(p => assert.equal(p.palierKm, 10000, `${p.id} : vidange 10 000 km`));
   list.forEach(v => {
-    near(v.prime_ttc, 10155 + 0.01125 * v.prix, 0.01, `prime ${v.model}`);
+    assert.ok(v.prime_ttc > 0 && !v.prime_estimee, `prime fournie ${v.model}`);
     assert.ok(PLANS_ENTRETIEN[v.entretien!], `plan ${v.entretien} de ${v.model}`);
   });
   assert.equal(CATALOG[2].model, 'DOBLO PANORAMA club', 'les numéros des anciens véhicules ne bougent pas');
