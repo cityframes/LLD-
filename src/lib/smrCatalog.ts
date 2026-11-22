@@ -643,7 +643,9 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
   const plan = cfg.plan;
   // Taux horaires : barème TALHA, mis à l'échelle du taux du plan d'entretien du modèle
   const baseRates = cfg.laborRates || DEFAULT_LABOR_RATES;
-  const rateCoef = plan ? plan.tauxHoraire / TAUX_REFERENCE : 1;
+  // Coefficient de prudence du plan (prévisions doublées tant que les devis SAV manquent)
+  const kPrev = plan?.coefPrevision ?? 1;
+  const rateCoef = plan ? (plan.tauxHoraire / TAUX_REFERENCE) * kPrev : 1;
   const rates: LaborRates = {
     revision: baseRates.revision * rateCoef,
     freinage: baseRates.freinage * rateCoef,
@@ -685,7 +687,7 @@ export function computeDetailedSmrPlan(cfg: SmrSimulationConfig): SmrSimulationR
         partPrice: op.partPrice * plan.coefPieces };
     }
     return { ...op, partPrice: op.partPrice * plan.coefPieces };
-  });
+  }).map(op => (plan ? { ...op, partPrice: op.partPrice * kPrev } : op));
 
   // Détermination des paliers de 10 000 km
   // Ex: pour 120 000 km -> 10k, 20k, 30k, 40k, 50k, 60k, 70k, 80k, 90k, 100k, 110k, 120k

@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { DEFAULTS, SimulatorParams, CATALOG } from '../src/lib/types';
 import { PLANS_ENTRETIEN } from '../src/lib/plansEntretien';
+import { computeDetailedSmrPlan } from '../src/lib/smrCatalog';
 import { computeEngine, computePnL, resiliationTable } from '../src/lib/engine';
 import { irr, pmt } from '../src/lib/utils';
 import { validationAlerts, canSubmit, nextRef, Cotation } from '../src/lib/team';
@@ -280,7 +281,7 @@ check('Plan du modèle : palier, distribution par chaîne et prix de la vidange'
   const ops = capt.r.smrPlan.milestones.flatMap(m => m.items.map(x => x.opId));
   assert.ok(!ops.some(o => o.startsWith('kitCalage')), 'pas de kit de distribution sur moteur à chaîne');
   const vid = capt.r.smrPlan.milestones[0].items.find(x => x.opId === 'vidangeEssence')!;
-  near(vid.partPrice, 4.5 * 1700 + 1500, 0.01);
+  near(vid.partPrice, (4.5 * 1700 + 1500) * 2, 0.01, 'vidange Captur estimée × 2 (prudence)');
   const fiat = hr('TIPO');
   assert.ok(fiat.r.smrPlan.milestones.flatMap(m => m.items).some(x => x.opId === 'kitCalagePompeEssence'), 'courroie Fiat à 60 000 km');
 });
@@ -290,6 +291,9 @@ check('Le plan d\'entretien du modèle entre dans le loyer', () => {
   assert.ok(bmw.r.provSMR > logan.r.provSMR * 1.5, 'BMW plus chère à entretenir');
   near(bmw.r.provSMR, bmw.r.smrPlan.totalApresRemiseHT / bmw.r.duree, 0.01);
   assert.ok(run().r.planEntretien === undefined, 'catalogue Fiat : barème TALHA inchangé');
+  const sans = computeDetailedSmrPlan({ kmTotal: 120000, dureeMois: 48, fuel: 'essence', includeBig: true, severe: false, remiseConcessionnaire: 0, margeBanque: 0, provisionAleas: 0, inflationAnnuelle: 0, plan: { ...PLANS_ENTRETIEN.renault_tce, coefPrevision: 1 } });
+  const avec = computeDetailedSmrPlan({ kmTotal: 120000, dureeMois: 48, fuel: 'essence', includeBig: true, severe: false, remiseConcessionnaire: 0, margeBanque: 0, provisionAleas: 0, inflationAnnuelle: 0, plan: PLANS_ENTRETIEN.renault_tce });
+  near(avec.totalPlanRawHT, sans.totalPlanRawHT * 2, 0.5, 'prévisions d\'entretien HR doublées');
 });
 
 check('BMW : vidange 10 000 km (choix banque) et intervalles des fiches constructeur', () => {
