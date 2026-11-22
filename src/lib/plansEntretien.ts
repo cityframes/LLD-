@@ -38,11 +38,19 @@ export interface PlanEntretien {
   intervalles?: Record<string, { km: number; mois: number }>;
   /** Ce qui est sourcé (document reçu) ; le reste est estimé */
   source?: string;
+  /** Coefficient de prudence appliqué aux pièces et à la main-d'œuvre estimées */
+  coefPrevision?: number;
 }
 
 export const TAUX_REFERENCE = 1347.89;
 
-const P = (p: PlanEntretien) => p;
+/**
+ * Prévisions doublées par prudence (Yazid, 22/11/2026) : pièces et main-d'œuvre estimées × 2,
+ * en attendant les devis du prestataire SAV.
+ */
+export const COEF_PREVISION_ENTRETIEN = 2;
+
+const P = (p: PlanEntretien): PlanEntretien => ({ coefPrevision: COEF_PREVISION_ENTRETIEN, ...p });
 
 export const PLANS_ENTRETIEN: Record<string, PlanEntretien> = {
   renault_tce: P({
