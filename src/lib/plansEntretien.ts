@@ -45,10 +45,10 @@ export interface PlanEntretien {
 export const TAUX_REFERENCE = 1347.89;
 
 /**
- * Prévisions doublées par prudence (Yazid, 22/11/2026) : pièces et main-d'œuvre estimées × 2,
+ * Prévisions majorées par prudence (Yazid : × 2 le 22/11, × 1,5 le 25/11/2026) : pièces et main-d'œuvre estimées × 1,5,
  * en attendant les devis du prestataire SAV.
  */
-export const COEF_PREVISION_ENTRETIEN = 2;
+export const COEF_PREVISION_ENTRETIEN = 1.5;
 
 const P = (p: PlanEntretien): PlanEntretien => ({ coefPrevision: COEF_PREVISION_ENTRETIEN, ...p });
 
