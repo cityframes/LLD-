@@ -98,7 +98,7 @@ export function SmrTab() {
               </p>
               {plan && (
                 <p className="text-[9.5px] mt-1 px-2 py-1 rounded bg-[#e0a04a1a] border border-[#e0a04a40] text-[#e8aa60]">
-                  ⚠ Coûts ESTIMÉS (aucun forfait concessionnaire publié en Algérie), construits sur le barème TALHA AUTO : {plan.note}{plan.coefPrevision && plan.coefPrevision !== 1 ? ` Prévisions multipliées par ${plan.coefPrevision} par prudence.` : ''} À confirmer par devis du prestataire SAV.
+                  ⚠ Coûts ESTIMÉS (aucun forfait concessionnaire publié en Algérie), construits sur le barème TALHA AUTO : {plan.note}{plan.coefPrevision && plan.coefPrevision !== 1 ? ` Prévisions multipliées par ${plan.coefPrevision.toLocaleString('fr-FR')} par prudence.` : ''} À confirmer par devis du prestataire SAV.
                 </p>
               )}
               {plan?.source && (
